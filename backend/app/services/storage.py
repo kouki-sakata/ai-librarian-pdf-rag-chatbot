@@ -32,3 +32,15 @@ class StorageService:
         # In a real app, we would raise HTTPException if upload fails
 
         return doc_id
+
+    @staticmethod
+    async def download_file(path: str) -> bytes:
+        """
+        Downloads a file from Supabase Storage.
+        """
+        # TODO: Integrate with Supabase Client
+        # response = supabase.storage.from_("documents").download(path)
+        # return response
+
+        # Mock return for now (empty bytes or mock content)
+        return b"%PDF-MockContent"
