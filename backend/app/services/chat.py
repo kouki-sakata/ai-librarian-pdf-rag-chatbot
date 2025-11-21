@@ -1,6 +1,7 @@
 import os
 from typing import AsyncGenerator
 
+from app.services.history import HistoryService
 from app.services.retriever import RetrieverService
 from openai import AsyncOpenAI
 
@@ -8,6 +9,7 @@ from openai import AsyncOpenAI
 class ChatService:
     def __init__(self):
         self.retriever = RetrieverService()
+        self.history = HistoryService()
         # Initialize AsyncOpenAI
         api_key = os.getenv("OPENAI_API_KEY")
         self.client = AsyncOpenAI(api_key=api_key or "mock-key")
@@ -41,9 +43,17 @@ Context:
         )
 
         # 4. Yield chunks
+        full_response = ""
         async for chunk in stream:
             content = chunk.choices[0].delta.content
             if content:
+                full_response += content
                 yield content
 
-        # TODO: Save history
+        # 5. Save history
+        # Save user message
+        await self.history.add_message(tenant_id, session_id, "user", query)
+        # Save assistant message
+        await self.history.add_message(
+            tenant_id, session_id, "assistant", full_response
+        )
