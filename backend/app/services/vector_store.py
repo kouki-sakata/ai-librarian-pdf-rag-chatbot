@@ -56,3 +56,27 @@ class VectorStoreService:
         # TODO: Implement delete
         # SQL: DELETE FROM vectors WHERE tenant_id = :tenant_id AND doc_id = :doc_id
         pass
+
+    def search(
+        self, tenant_id: str, query_embedding: List[float], top_k: int = 5
+    ) -> List[dict]:
+        """
+        Searches for similar vectors.
+        """
+        # TODO: Implement actual PGVector search
+        # SQL: SELECT content, metadata, 1 - (embedding <=> :query_embedding) as similarity
+        # FROM vectors WHERE tenant_id = :tenant_id ORDER BY similarity DESC LIMIT :top_k
+
+        # Mock return
+        return [
+            {
+                "content": "Mock content 1",
+                "metadata": {"source": "doc1", "page": 1},
+                "similarity": 0.9,
+            },
+            {
+                "content": "Mock content 2",
+                "metadata": {"source": "doc1", "page": 2},
+                "similarity": 0.8,
+            },
+        ]

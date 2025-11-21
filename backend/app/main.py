@@ -1,4 +1,4 @@
-from app.api.v1.endpoints import health, upload
+from app.api.v1.endpoints import chat, health, upload
 from app.core.config import settings
 from app.core.middleware import AuthMiddleware
 from fastapi import FastAPI
@@ -25,8 +25,9 @@ if settings.BACKEND_CORS_ORIGINS:
 app.add_middleware(AuthMiddleware)
 
 # Include routers
-app.include_router(health.router, prefix=settings.API_V1_STR, tags=["health"])
-app.include_router(upload.router, prefix=settings.API_V1_STR, tags=["upload"])
+app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
+app.include_router(upload.router, prefix="/api/v1/upload", tags=["upload"])
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
 
 
 @app.get("/")
