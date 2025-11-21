@@ -23,6 +23,13 @@ def mock_vector_store():
 
 
 @pytest.fixture
+def mock_history_service():
+    with patch("app.services.history.HistoryService") as mock:
+        instance = mock.return_value
+        yield instance
+
+
+@pytest.fixture
 def mock_openai():
     with patch("app.services.chat.AsyncOpenAI") as mock:
         instance = mock.return_value
@@ -52,7 +59,9 @@ async def test_retrieve_relevant_chunks(mock_vector_store):
 
 
 @pytest.mark.asyncio
-async def test_generate_answer_flow(mock_vector_store, mock_openai):
+async def test_generate_answer_flow(
+    mock_vector_store, mock_openai, mock_history_service
+):
     # Setup
     service = ChatService()
 
@@ -70,3 +79,14 @@ async def test_generate_answer_flow(mock_vector_store, mock_openai):
     # Verify interactions
     mock_vector_store.search.assert_called()  # Retrieval happened
     mock_openai.chat.completions.create.assert_called()  # LLM called
+
+    # Verify history saving
+    assert mock_history_service.add_message.call_count == 2
+    # Check user message saved
+    mock_history_service.add_message.assert_any_call(
+        "tenant1", "session1", "user", MOCK_QUERY
+    )
+    # Check assistant message saved (full response)
+    mock_history_service.add_message.assert_any_call(
+        "tenant1", "session1", "assistant", full_response
+    )
