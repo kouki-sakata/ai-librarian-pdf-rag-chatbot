@@ -32,3 +32,5 @@ backend/.coverage
 # Codex
 .codex
 
+# Agent
+.agent
