@@ -1,12 +1,15 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from app.core.supabase_client import get_supabase_client
 
+if TYPE_CHECKING:
+    from supabase import Client
+
 # Module-level client placeholder to ease patching in tests
-supabase = None
+supabase: "Client | None" = None
 
 
-def _get_client():
+def _get_client() -> "Client":
     global supabase
     if supabase is None:
         supabase = get_supabase_client()
@@ -20,11 +23,10 @@ class HistoryService:
         """
         client = _get_client()
         response = client.table("chat_sessions").insert({"tenant_id": tenant_id}).execute()
-        return response.data[0]["id"]
+        data = cast(list[dict[str, Any]], response.data)
+        return str(data[0]["id"])
 
-    async def add_message(
-        self, tenant_id: str, session_id: str, role: str, content: str
-    ):
+    async def add_message(self, tenant_id: str, session_id: str, role: str, content: str) -> None:
         """
         Adds a message to the session history.
         """
@@ -38,9 +40,7 @@ class HistoryService:
             }
         ).execute()
 
-    async def get_history(
-        self, tenant_id: str, session_id: str
-    ) -> list[dict[str, Any]]:
+    async def get_history(self, tenant_id: str, session_id: str) -> list[dict[str, Any]]:
         """
         Retrieves chat history for a session.
         """
@@ -53,4 +53,4 @@ class HistoryService:
             .order("created_at")
             .execute()
         )
-        return response.data
+        return cast(list[dict[str, Any]], response.data)

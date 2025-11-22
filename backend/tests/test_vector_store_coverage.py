@@ -7,8 +7,10 @@ from app.services.vector_store import VectorStoreService
 
 @pytest.fixture
 def mock_db_connection():
-    with patch("psycopg.connect") as mock_connect, \
-         patch("app.services.vector_store.register_vector") as mock_register:  # Mock register_vector
+    with (
+        patch("psycopg.connect") as mock_connect,
+        patch("app.services.vector_store.register_vector") as mock_register,
+    ):  # Mock register_vector
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
@@ -37,7 +39,9 @@ async def test_vector_store_upsert_vectors(mock_db_connection):
     await service.upsert_vectors(tenant_id, doc_id, chunks, embeddings, metadata)
 
     # Verify set_config was called
-    mock_cursor.execute.assert_any_call("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+    mock_cursor.execute.assert_any_call(
+        "select set_config('app.tenant_id', %s, true);", (tenant_id,)
+    )
 
     # Verify executemany was called for insert
     assert mock_cursor.executemany.called
@@ -59,7 +63,9 @@ async def test_vector_store_delete_vectors(mock_db_connection):
     await service.delete_vectors(tenant_id, doc_id)
 
     # Verify set_config was called
-    mock_cursor.execute.assert_any_call("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+    mock_cursor.execute.assert_any_call(
+        "select set_config('app.tenant_id', %s, true);", (tenant_id,)
+    )
 
     # Verify delete execution
     mock_cursor.execute.assert_any_call(
@@ -74,7 +80,12 @@ async def test_vector_store_search(mock_db_connection):
 
     # Mock fetchall return
     mock_cursor.fetchall.return_value = [
-        ("doc1", "content1", '{"page": 1}', 0.1),  # similarity is distance, so 0.1 means 0.9 similarity
+        (
+            "doc1",
+            "content1",
+            '{"page": 1}',
+            0.1,
+        ),  # similarity is distance, so 0.1 means 0.9 similarity
         ("doc2", "content2", None, 0.2),
     ]
 
@@ -90,13 +101,17 @@ async def test_vector_store_search(mock_db_connection):
     results = await service.search(tenant_id, [0.1, 0.2], top_k=2)
 
     # Verify set_config
-    mock_cursor.execute.assert_any_call("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+    mock_cursor.execute.assert_any_call(
+        "select set_config('app.tenant_id', %s, true);", (tenant_id,)
+    )
 
     # Verify results
     assert len(results) == 2
     assert results[0]["doc_id"] == "doc1"
     assert results[0]["metadata"] == {"page": 1}
-    assert results[0]["similarity"] == 0.1  # The mock returns raw distance/similarity as is from SQL
+    assert (
+        results[0]["similarity"] == 0.1
+    )  # The mock returns raw distance/similarity as is from SQL
 
     # Test with string metadata
     assert results[1]["doc_id"] == "doc2"

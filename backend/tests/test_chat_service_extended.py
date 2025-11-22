@@ -11,10 +11,11 @@ async def test_chat_service_empty_result():
     """
     Test that ChatService returns a specific message and metadata when no chunks are found.
     """
-    with patch("app.services.chat.RetrieverService") as MockRetriever, \
-         patch("app.services.chat.AsyncOpenAI") as MockOpenAI, \
-         patch("app.services.chat.HistoryService") as MockHistory:
-
+    with (
+        patch("app.services.chat.RetrieverService") as MockRetriever,
+        patch("app.services.chat.AsyncOpenAI") as MockOpenAI,
+        patch("app.services.chat.HistoryService") as MockHistory,
+    ):
         # Setup Mocks
         mock_retriever = MockRetriever.return_value
         mock_retriever.retrieve = AsyncMock(return_value=[])  # Empty results
@@ -53,26 +54,29 @@ async def test_chat_service_with_citations():
     """
     Test that ChatService returns citations in metadata when chunks are found.
     """
-    with patch("app.services.chat.RetrieverService") as MockRetriever, \
-         patch("app.services.chat.AsyncOpenAI") as MockOpenAI, \
-         patch("app.services.chat.HistoryService") as MockHistory:
-
+    with (
+        patch("app.services.chat.RetrieverService") as MockRetriever,
+        patch("app.services.chat.AsyncOpenAI") as MockOpenAI,
+        patch("app.services.chat.HistoryService") as MockHistory,
+    ):
         # Setup Mocks
         mock_retriever = MockRetriever.return_value
-        mock_retriever.retrieve = AsyncMock(return_value=[
-            {
-                "content": "Chunk 1",
-                "doc_id": "doc1",
-                "metadata": {"source": "file1.pdf", "page": 1, "doc_id": "doc1"},
-                "similarity": 0.9
-            },
-            {
-                "content": "Chunk 2",
-                "doc_id": "doc2",
-                "metadata": {"source": "file2.pdf", "page": 2, "doc_id": "doc2"},
-                "similarity": 0.8
-            }
-        ])
+        mock_retriever.retrieve = AsyncMock(
+            return_value=[
+                {
+                    "content": "Chunk 1",
+                    "doc_id": "doc1",
+                    "metadata": {"source": "file1.pdf", "page": 1, "doc_id": "doc1"},
+                    "similarity": 0.9,
+                },
+                {
+                    "content": "Chunk 2",
+                    "doc_id": "doc2",
+                    "metadata": {"source": "file2.pdf", "page": 2, "doc_id": "doc2"},
+                    "similarity": 0.8,
+                },
+            ]
+        )
 
         mock_history = MockHistory.return_value
         mock_history.add_message = AsyncMock()
@@ -83,9 +87,9 @@ async def test_chat_service_with_citations():
         async def mock_stream_generator():
             class MockChoice:
                 def __init__(self, content):
-                    self.delta = type('obj', (object,), {'content': content})
+                    self.delta = type("obj", (object,), {"content": content})
 
-            yield type('obj', (object,), {'choices': [MockChoice("Answer")]})
+            yield type("obj", (object,), {"choices": [MockChoice("Answer")]})
 
         # create needs to be an awaitable that returns the generator
         mock_openai.chat.completions.create = AsyncMock(return_value=mock_stream_generator())

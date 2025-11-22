@@ -1,5 +1,5 @@
 import time
-from typing import Any
+from typing import Any, cast
 
 import httpx
 from fastapi import HTTPException, status
@@ -24,14 +24,14 @@ async def get_jwks() -> dict[str, Any]:
         and "timestamp" in jwks_cache
         and current_time - jwks_cache["timestamp"] < JWKS_CACHE_TTL
     ):
-        return jwks_cache["keys"]
+        return cast(dict[str, Any], jwks_cache["keys"])
 
     jwks_url = f"https://{settings.SUPABASE_PROJECT_REF}.supabase.co/auth/v1/jwks"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(jwks_url)
             response.raise_for_status()
-            keys = response.json()
+            keys: dict[str, Any] = response.json()
             jwks_cache = {"keys": keys, "timestamp": current_time}
             return keys
     except Exception as e:
@@ -53,7 +53,7 @@ async def verify_jwt(token: str) -> dict[str, Any]:
 
         if alg == "HS256" and settings.SUPABASE_JWT_SECRET:
             # Test/Dev mode using shared secret
-            payload = jwt.decode(
+            payload: dict[str, Any] = jwt.decode(
                 token,
                 settings.SUPABASE_JWT_SECRET,
                 algorithms=["HS256"],

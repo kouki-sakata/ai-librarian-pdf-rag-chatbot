@@ -12,9 +12,8 @@ class StorageService:
     async def upload_file(file: UploadFile, tenant_id: str) -> str:
         """Upload a PDF to Supabase Storage under the tenant namespace."""
         doc_id = str(uuid.uuid4())
-        file_extension = (
-            file.filename.split(".")[-1] if "." in file.filename else "pdf"
-        )
+        filename = file.filename or "unknown.pdf"
+        file_extension = filename.split(".")[-1] if "." in filename else "pdf"
         path = f"{tenant_id}/docs/{doc_id}.{file_extension}"
 
         content = await file.read()
@@ -56,4 +55,4 @@ class StorageService:
                 detail="File not found or access denied",
             )
 
-        return response
+        return bytes(response)

@@ -4,12 +4,10 @@ from app.services.vector_store import VectorStoreService
 
 
 class RetrieverService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.vector_store = VectorStoreService()
 
-    async def retrieve(
-        self, tenant_id: str, query: str, top_k: int = 5
-    ) -> list[dict[str, Any]]:
+    async def retrieve(self, tenant_id: str, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """
         Retrieves relevant chunks for a query.
         """
