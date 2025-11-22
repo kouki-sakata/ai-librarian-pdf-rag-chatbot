@@ -13,10 +13,10 @@
 - サーバ起動（ローカル）
   - backend: `poetry run uvicorn app.main:app --reload --port 8000`
   - frontend: `npm run dev --prefix frontend`
-- 自動テスト
-  - backend: `cd backend && poetry run pytest`
-  - frontend: `cd frontend && npm run test -- --runInBand`
-  - 型チェック: `npm run typecheck --prefix frontend`
+- 自動テスト（2025-11-22 時点で sandbox 実行済み）
+  - backend: `cd backend && poetry run pytest`  → 27/27 pass（`METRICS_SERVER_ENABLED=false` で実行）
+  - frontend: `cd frontend && npm run test` → pass
+  - 型チェック: `npm run typecheck --prefix frontend` → pass
 - 簡易シナリオ確認
   1) フロントからPDFアップロード → 成功レスポンスに `doc_id` が返ること
   2) 同セッションで質問 → ストリーミングで本文と `type: "metadata"` 行が到達し、UI に出典リストが表示されること
@@ -29,8 +29,9 @@
    - 50MB PDF 取り込みの中央値/95p を計測（要件 5.3/5.4）。`locust` または `pytest-benchmark` でシナリオ化
 3. OpenAPI ベースの型生成（任意だが推奨）
    - `/api/v1/openapi.json` から `openapi-typescript` 等でフロント用クライアントを生成し、fetch 実装を置換
-4. CI 統合
-   - 上記テストと typecheck を CI に追加し、Supabase 接続が不要な箇所はモック化して落ちないようにする
+4. CI 統合（実施済みの追加）
+   - `frontend`: `npm run typecheck` を追加
+   - `backend`: `METRICS_SERVER_ENABLED=false`, `OPENAI_API_KEY=test-key`, `SUPABASE_SERVICE_ROLE_KEY=test-key` を注入して pytest を安定化
 
 ## 留意
 - テストは pgvector / Supabase 実リソースが前提。ネットワーク不可環境では `VectorStoreService` と `StorageService` をモックしてユニットレベルのみ通す。
