@@ -125,7 +125,12 @@ export function ChatInterface() {
                   </Alert>
                 </div>
               ) : (
-                <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role}
+                  content={msg.content}
+                  citations={msg.citations}
+                />
               )
             )
           )}

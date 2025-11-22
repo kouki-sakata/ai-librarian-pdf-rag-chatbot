@@ -6,9 +6,10 @@ import { Message } from "@/types";
 interface ChatMessageProps {
   role: Message["role"];
   content: string;
+  citations?: Message["citations"];
 }
 
-export function ChatMessage({ role, content }: ChatMessageProps) {
+export function ChatMessage({ role, content, citations }: ChatMessageProps) {
   return (
     <div className={cn("flex w-full mb-4", role === "user" ? "justify-end" : "justify-start")}>
       <div
@@ -36,6 +37,20 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
             >
               {content}
             </ReactMarkdown>
+            {citations && citations.length > 0 && (
+              <div className="mt-2 text-xs text-muted-foreground space-y-1">
+                <div className="font-semibold text-foreground">出典</div>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {citations.map((c, idx) => (
+                    <li key={`${c.source}-${idx}`}>
+                      {c.source}
+                      {c.page ? ` p.${c.page}` : ""}
+                      {typeof c.similarity === "number" ? ` (score: ${c.similarity.toFixed(2)})` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : (
           <div className="whitespace-pre-wrap break-words">{content}</div>

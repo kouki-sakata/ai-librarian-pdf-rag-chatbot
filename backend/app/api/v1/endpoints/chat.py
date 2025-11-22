@@ -27,7 +27,9 @@ async def chat_endpoint(request: ChatRequest):
         ):
             yield chunk
 
-    return StreamingResponse(stream_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        stream_generator(), media_type="application/x-ndjson; charset=utf-8"
+    )
 
 
 @router.post("/sessions")

@@ -6,57 +6,50 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 
 ## Directory Patterns
 
-### Frontend (Next.js 15)
+### Frontend (Next.js 16)
 **Location**: `/frontend/`  
-**Purpose**: アップロード/チャット UI とストリーミング表示。App Router で `app/(upload|chat)/` など機能単位のルートを持ち、UI パーツは `src/components/ui`（デザインシステム）と `src/components/features`（機能固有）に分割。  
-**Example**: `frontend/src/app/chat/page.tsx` でサーバーアクションを呼び出し、`src/components/features/chat/ChatPanel.tsx` がストリームを描画。
+**Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。  
+**Supporting Modules**: 共通ロジックは `frontend/hooks`（例: `use-chat.ts` が SSE/stream を管理）、ユーティリティは `frontend/lib`、型は `frontend/types` に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。  
+**Path Alias**: `@/*` → `frontend/` ルート配下。
 
-### Backend (FastAPI + Ports/Adapters)
+### Backend (FastAPI)
 **Location**: `/backend/`  
-**Purpose**: FastAPI のエンドポイント層とドメインサービスを分離。`app/api/routes` は薄いバリデーションと認証、`app/domain` にユースケース、`app/adapters` に実装（vector, storage, auth, llm）。  
-**Example**: `app/api/routes/upload.py` → `DocumentIngestionService` (domain) → `PgVectorAdapter` / `SupabaseStorageAdapter`。
+**Purpose**: FastAPI エンドポイントを `app/api/v1/endpoints` に配置し、処理は `app/services` にまとめるシンプルなサービスレイヤ構成。設定・CORS・メトリクスは `app/core` に集約（`telemetry.py` が OpenTelemetry + Prometheus exporter を起動）。  
+**Example**: `app/api/v1/endpoints/upload.py` → `IngestionService` が `StorageService`（Supabase Storage 想定、現状モック）と `VectorStoreService`（pgvector 予定、現状モック）をオーケストレーション。
 
 ### Contracts & Shared Schemas
-**Location**: `/frontend/src/lib/api`（型生成クライアント）と `/backend/app/schemas`（Pydantic）。  
-**Purpose**: OpenAPI で合意した DTO を単一ソースにし、フロントは生成型か Zod バリデーションで利用。  
-**Example**: `app/schemas/chat.py` ↔ `frontend/src/lib/api/types.ts`。
+**Location**: `/backend/app/core` で設定・セキュリティ、`/backend/app/services` で I/O 境界を抽象化。フロントは `frontend/types` にチャット/アップロード DTO を定義。現状 OpenAPI 生成クライアントは未導入。
 
 ### Infra & Ops
-**Location**: `/infra/`  
-**Purpose**: `docker-compose.yml` で Supabase/pgvector を dev 起動し、`.env.example` で必須変数を共有。デプロイ設定（Vercel/Render）もここに集約。  
-**Example**: `infra/docker-compose.yml` で Postgres+pgvector+Supabase CLI サービスを定義。
+**Location**: `supabase/migrations` に DB 変更が保存される。汎用的な `infra/` ディレクトリは現時点で未作成。環境変数は各パッケージの `.env.example` で共有予定。
 
 ## Naming Conventions
 
-- Frontend ファイル: コンポーネントは PascalCase (`ChatPanel.tsx`)、hooks は camelCase (`useUpload.ts`)
+- Frontend: コンポーネントは PascalCase (`UploadForm.tsx`)、hooks は camelCase (`useChat.ts`)
 - Backend: Python モジュール/ファイルは snake_case、テストは `test_*.py`
 - DTO/Schema: Pydantic モデルは PascalCase、型エイリアスは camelCase
-- 環境変数: `UPLOADER_MAX_MB`, `OPENAI_MODEL`, `SUPABASE_PROJECT_URL` のように SCREAMING_SNAKE_CASE
+- 環境変数: `OPENAI_MODEL`, `SUPABASE_PROJECT_REF` のように SCREAMING_SNAKE_CASE
 
 ## Import Organization
 
 ```typescript
 // Frontend
-import { ChatPanel } from '@/components/features/chat/ChatPanel'  // 絶対パス (@/ は frontend/src)
-import { UploadButton } from './UploadButton'                     // 相対は近接ファイルに限定
+import { UploadForm } from "@/components/upload-form";  // 絶対パス (@/* は frontend ルート)
+import { getUploadErrorMessage } from "@/lib/error-messages";
 ```
 
 ```python
 # Backend
-from app.api.dependencies import get_current_tenant
-from app.domain.document import DocumentIngestionService
-from app.adapters.vector.pgvector import PgVectorAdapter
+from app.api.v1.endpoints import chat, upload
+from app.services.vector_store import VectorStoreService
 ```
-
-**Path Aliases**:
-- `@/` → `frontend/src`
 
 ## Code Organization Principles
 
-- UI は状態/表示に集中し、認証やドメインロジックはサーバーアクション or API 経由で実行
-- ドメインサービスから外部依存（LLM, vector, storage）へはポートインターフェース越しに呼び出す
-- すべての DB/Storage/Vector 操作は `tenant_id` を必須にし、RLS とアプリ側バリデーションの二重防御
-- 取り込みフローは「保存→抽出→embed→index」を単一トランザクションまたは明示的ジョブステータスで管理し、再処理は idempotent
-- Chat 応答は必ず citation を返し、ストリーミング中断時は UI へ明示的にエラーを伝搬
+- UI は App Router のページで状態を保持し、API 呼び出し（fetch）と hook 経由でチャット/アップロードを制御
+- サービス層は Supabase Storage・pgvector・OpenAI へのアクセスを抽象化（現在はモック実装。実ストレージ/ベクトル接続時に差し替え）
+- すべての操作で `tenant_id` / `session_id` を受け取り、テナント境界をアプリ層で明示（RLS 適用は今後の統合）
+- 取り込みフローは「保存→抽出→embed→index」を単一サービスで直列実行し、メトリクスで閾値監視
+- Chat 応答はストリーミングを前提にし、エラー時は UI へ明示的にトースト + メッセージを返す
 
-updated_at: 2025-11-21
+updated_at: 2025-11-22

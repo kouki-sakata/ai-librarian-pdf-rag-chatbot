@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.endpoints import chat, health, upload
 from app.core.config import settings
+from app.core.middleware import AuthMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,7 +23,7 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 # Add Auth Middleware
-# app.add_middleware(AuthMiddleware)
+app.add_middleware(AuthMiddleware)
 
 # Include routers
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor

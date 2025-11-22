@@ -19,6 +19,6 @@ class RetrieverService:
         query_embedding = embeddings[0]
 
         # 2. Search vector store
-        results = self.vector_store.search(tenant_id, query_embedding, top_k)
+        results = await self.vector_store.search(tenant_id, query_embedding, top_k)
 
         return results

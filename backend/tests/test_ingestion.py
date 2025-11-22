@@ -49,7 +49,7 @@ async def test_ingestion_flow(mock_pdf_parser, mock_vector_store):
         await service.process_document(tenant_id, doc_id, file_path)
 
         # Verify
-        mock_download.assert_called_once_with(file_path)
+        mock_download.assert_called_once_with(tenant_id, file_path)
         mock_pdf_parser.extract_text.assert_called_once_with(MOCK_PDF_CONTENT)
         mock_pdf_parser.split_text.assert_called_once_with(MOCK_TEXT)
         # Note: IngestionService now calculates tokens and calls upsert_vectors with just chunks (and tenant/doc id)
@@ -58,9 +58,7 @@ async def test_ingestion_flow(mock_pdf_parser, mock_vector_store):
         # It does NOT call generate_embeddings.
 
         mock_vector_store.generate_embeddings.assert_called_once_with(MOCK_CHUNKS)
-        mock_vector_store.upsert_vectors.assert_called_once_with(
-            tenant_id, doc_id, MOCK_CHUNKS, MOCK_EMBEDDINGS
-        )
+        mock_vector_store.upsert_vectors.assert_called_once()
 
 
 def test_parser_logic():

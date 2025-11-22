@@ -1,81 +1,122 @@
-import os
+from __future__ import annotations
 
+import asyncio
+import hashlib
+import json
+from typing import Any
+
+import psycopg
 from langchain_openai import OpenAIEmbeddings
+from pgvector.psycopg import register_vector
 
-# Mocking pgvector interaction for now as we don't have the DB setup in this environment fully accessible/migrated
-# In a real scenario, we would use `vecs` or `psycopg` to insert into `vectors` table.
+from app.core.config import settings
 
 
 class VectorStoreService:
     def __init__(self):
-        # Initialize OpenAI Embeddings
-        # Ensure OPENAI_API_KEY is set in env or settings
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            # Fallback for testing if not set, though it will fail if we try to call it without mocking
-            pass
-
         self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-small",
-            api_key=api_key
-            or "mock-key",  # Prevent init failure in tests if env missing
+            model=settings.OPENAI_EMBEDDING_MODEL,
+            api_key=settings.OPENAI_API_KEY,
         )
+        self.conninfo = settings.SUPABASE_DB_URL
+
+    def _get_conn(self) -> psycopg.Connection:
+        if not self.conninfo:
+            raise RuntimeError("SUPABASE_DB_URL is not configured")
+        conn = psycopg.connect(self.conninfo, autocommit=True)
+        register_vector(conn)
+        return conn
 
     def generate_embeddings(self, chunks: list[str]) -> list[list[float]]:
-        """
-        Generates embeddings for a list of text chunks.
-        """
-        try:
-            return self.embeddings.embed_documents(chunks)
-        except Exception as e:
-            print(f"Embedding generation failed: {e}")
-            # For TDD/Mocking purposes, if we don't have a real key, this might fail.
-            # The test mocks this method, so it's fine.
-            raise e
+        """Generate embeddings for a list of text chunks."""
+        return self.embeddings.embed_documents(chunks)
 
-    def upsert_vectors(
+    async def upsert_vectors(
         self,
         tenant_id: str,
         doc_id: str,
         chunks: list[str],
         embeddings: list[list[float]],
-    ):
-        """
-        Upserts vectors into the database.
-        """
-        # TODO: Implement actual PGVector upsert
-        # SQL: INSERT INTO vectors (tenant_id, doc_id, content, embedding) VALUES ...
-        # ON CONFLICT (tenant_id, doc_id, chunk_hash) DO UPDATE ...
-        pass
+        metadata: list[dict[str, Any]] | None = None,
+    ) -> None:
+        """Persist chunk embeddings into pgvector with idempotent upsert."""
 
-    def delete_vectors(self, tenant_id: str, doc_id: str):
-        """
-        Deletes all vectors for a document.
-        """
-        # TODO: Implement delete
-        # SQL: DELETE FROM vectors WHERE tenant_id = :tenant_id AND doc_id = :doc_id
-        pass
+        def _upsert() -> None:
+            with self._get_conn() as conn, conn.cursor() as cur:
+                records = []
+                metadata = metadata_param or []
+                for idx, (chunk, emb) in enumerate(zip(chunks, embeddings)):
+                    chunk_id = hashlib.sha1(chunk.encode("utf-8")).hexdigest()
+                    meta = metadata[idx] if idx < len(metadata) else {}
+                    meta.setdefault("doc_id", doc_id)
+                    meta.setdefault("tenant_id", tenant_id)
+                    meta.setdefault("chunk_index", idx + 1)
 
-    def search(
+                    records.append(
+                        (
+                            tenant_id,
+                            doc_id,
+                            chunk_id,
+                            chunk,
+                            json.dumps(meta),
+                            emb,
+                        )
+                    )
+
+                cur.executemany(
+                    """
+                    INSERT INTO vectors (tenant_id, doc_id, chunk_id, content, metadata, embedding)
+                    VALUES (%s, %s, %s, %s, %s::jsonb, %s)
+                    ON CONFLICT (tenant_id, doc_id, chunk_id) DO UPDATE
+                    SET content = EXCLUDED.content,
+                        metadata = EXCLUDED.metadata,
+                        embedding = EXCLUDED.embedding;
+                    """,
+                    records,
+                )
+
+        metadata_param = metadata
+        await asyncio.to_thread(_upsert)
+
+    async def delete_vectors(self, tenant_id: str, doc_id: str) -> None:
+        """Delete all vectors for a document in a tenant scope."""
+
+        def _delete() -> None:
+            with self._get_conn() as conn, conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM vectors WHERE tenant_id = %s AND doc_id = %s",
+                    (tenant_id, doc_id),
+                )
+
+        await asyncio.to_thread(_delete)
+
+    async def search(
         self, tenant_id: str, query_embedding: list[float], top_k: int = 5
-    ) -> list[dict]:
-        """
-        Searches for similar vectors.
-        """
-        # TODO: Implement actual PGVector search
-        # SQL: SELECT content, metadata, 1 - (embedding <=> :query_embedding) as similarity
-        # FROM vectors WHERE tenant_id = :tenant_id ORDER BY similarity DESC LIMIT :top_k
+    ) -> list[dict[str, Any]]:
+        """Semantic search constrained by tenant_id."""
 
-        # Mock return
-        return [
-            {
-                "content": "Mock content 1",
-                "metadata": {"source": "doc1", "page": 1},
-                "similarity": 0.9,
-            },
-            {
-                "content": "Mock content 2",
-                "metadata": {"source": "doc1", "page": 2},
-                "similarity": 0.8,
-            },
-        ]
+        def _search() -> list[dict[str, Any]]:
+            with self._get_conn() as conn, conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT content,
+                           metadata::jsonb,
+                           1 - (embedding <=> %s) AS similarity
+                    FROM vectors
+                    WHERE tenant_id = %s
+                    ORDER BY similarity DESC
+                    LIMIT %s;
+                    """,
+                    (query_embedding, tenant_id, top_k),
+                )
+                rows = cur.fetchall()
+                return [
+                    {
+                        "content": row[0],
+                        "metadata": row[1] or {},
+                        "similarity": float(row[2]) if row[2] is not None else 0.0,
+                    }
+                    for row in rows
+                ]
+
+        return await asyncio.to_thread(_search)
