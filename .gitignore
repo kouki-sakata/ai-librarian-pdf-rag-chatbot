@@ -21,3 +21,7 @@ coverage/
 
 # Supabase
 supabase/functions/*/.env
+
+backend/tests/performance/
+backend/tests/security/
+backend/.coverage

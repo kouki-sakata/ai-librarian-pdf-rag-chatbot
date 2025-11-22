@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     # CORS Settings
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
 
+    # Observability Thresholds
+    INGESTION_DURATION_THRESHOLD_SECONDS: float = 60.0
+    CHAT_LATENCY_THRESHOLD_SECONDS: float = 10.0
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 

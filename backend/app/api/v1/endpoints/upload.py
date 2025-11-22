@@ -1,13 +1,12 @@
 from typing import Any
 
 from app.core.context import tenant_id_context
+from app.core.validators import validate_file
 from app.services.ingestion import IngestionService
 from app.services.storage import StorageService
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 router = APIRouter()
-
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 
 @router.post("/", status_code=status.HTTP_200_OK)
@@ -21,23 +20,8 @@ async def upload_document(file: UploadFile = File(...)) -> Any:
             detail="Tenant ID not found in context",
         )
 
-    # Validate MIME type
-    if file.content_type != "application/pdf":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are allowed"
-        )
-
-    # Validate File Size
-    # Note: file.file is a SpooledTemporaryFile. We can check size by seeking to end.
-    file.file.seek(0, 2)
-    size = file.file.tell()
-    file.file.seek(0)
-
-    if size > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="File size exceeds 50MB limit",
-        )
+    # Validate File
+    validate_file(file)
 
     try:
         doc_id = await StorageService.upload_file(file, tenant_id)

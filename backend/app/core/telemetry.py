@@ -3,10 +3,13 @@ import time
 from contextlib import contextmanager
 from typing import Generator
 
+from app.core.config import settings
 from opentelemetry import metrics, trace
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
+from prometheus_client import start_http_server
 
 # Setup Logger
 logger = logging.getLogger(__name__)
@@ -18,8 +21,12 @@ resource = Resource.create({"service.name": "ai-librarian-rag"})
 trace.set_tracer_provider(TracerProvider(resource=resource))
 tracer = trace.get_tracer(__name__)
 
-# Meter Provider
-metrics.set_meter_provider(MeterProvider(resource=resource))
+# Meter Provider with Prometheus Exporter
+# Start Prometheus client
+start_http_server(port=9464, addr="0.0.0.0")
+reader = PrometheusMetricReader()
+provider = MeterProvider(resource=resource, metric_readers=[reader])
+metrics.set_meter_provider(provider)
 meter = metrics.get_meter(__name__)
 
 # Metrics Definitions
@@ -59,7 +66,12 @@ def measure_latency(
         duration = time.perf_counter() - start_time
         histogram.record(duration, attributes or {})
 
-        if threshold_seconds and duration > threshold_seconds:
+        # Use default threshold from settings if not provided
+        limit = threshold_seconds or settings.CHAT_LATENCY_THRESHOLD_SECONDS
+        # For ingestion, we might want a different default, but this function is generic.
+        # Ideally, caller passes specific threshold.
+
+        if limit and duration > limit:
             logger.error(
-                f"Performance Alert: Operation took {duration:.2f}s, exceeding threshold of {threshold_seconds}s. Attributes: {attributes}"
+                f"Performance Alert: Operation took {duration:.2f}s, exceeding threshold of {limit}s. Attributes: {attributes}"
             )

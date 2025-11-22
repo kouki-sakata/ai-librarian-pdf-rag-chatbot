@@ -1534,6 +1534,23 @@ importlib-metadata = ">=6.0,<8.8.0"
 typing-extensions = ">=4.5.0"
 
 [[package]]
+name = "opentelemetry-exporter-prometheus"
+version = "0.59b0"
+description = "Prometheus Metric Exporter for OpenTelemetry"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "opentelemetry_exporter_prometheus-0.59b0-py3-none-any.whl", hash = "sha256:71ced23207abd15b30d1fe4e7e910dcaa7c2ff1f24a6ffccbd4fdded676f541b"},
+    {file = "opentelemetry_exporter_prometheus-0.59b0.tar.gz", hash = "sha256:d64f23c49abb5a54e271c2fbc8feacea0c394a30ec29876ab5ef7379f08cf3d7"},
+]
+
+[package.dependencies]
+opentelemetry-api = ">=1.12,<2.0"
+opentelemetry-sdk = ">=1.38.0,<1.39.0"
+prometheus-client = ">=0.5.0,<1.0.0"
+
+[[package]]
 name = "opentelemetry-instrumentation"
 version = "0.59b0"
 description = "Instrumentation Tools & Auto Instrumentation for OpenTelemetry Python"
@@ -1782,6 +1799,21 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
+
+[[package]]
+name = "prometheus-client"
+version = "0.23.1"
+description = "Python client for the Prometheus monitoring system."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "prometheus_client-0.23.1-py3-none-any.whl", hash = "sha256:dd1913e6e76b59cfe44e7a4b83e01afc9873c1bdfd2ed8739f1e76aeca115f99"},
+    {file = "prometheus_client-0.23.1.tar.gz", hash = "sha256:6ae8f9081eaaaf153a2e959d2e6c4f4fb57b12ef76c8c7980202f1e57b48b2ce"},
+]
+
+[package.extras]
+twisted = ["twisted"]
 
 [[package]]
 name = "psutil"
@@ -3166,4 +3198,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "cacbead9be6bcb6e968e96943a8cdcbfb18af98c3ca83dcc36691c0eb1e656c1"
+content-hash = "5771760e0d02fc93228285b4c6435c671c987c1c9d270a558d208b404313b1de"

@@ -1,10 +1,12 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Message } from "@/types";
 import { cn } from "@/lib/utils";
+import { User, Bot, AlertCircle } from "lucide-react";
 
 interface ChatMessageProps {
-  role: "user" | "assistant";
+  role: Message["role"];
   content: string;
 }
 
