@@ -59,7 +59,9 @@ export function ChatMessage({ role, content, citations, isEmptyResult }: ChatMes
                     <li key={`${c.source}-${idx}`}>
                       {c.source}
                       {c.page ? ` p.${c.page}` : ""}
-                      {typeof c.similarity === "number" ? ` (score: ${c.similarity.toFixed(2)})` : ""}
+                      {typeof c.similarity === "number"
+                        ? ` (score: ${c.similarity.toFixed(2)})`
+                        : ""}
                     </li>
                   ))}
                 </ul>

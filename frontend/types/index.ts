@@ -1,8 +1,7 @@
 import type { components, paths } from "@/types/api";
 
 type ChatRequest = components["schemas"]["ChatRequest"];
-type UploadRequestBody =
-  components["schemas"]["Body_upload_document_api_v1_upload__post"];
+type UploadRequestBody = components["schemas"]["Body_upload_document_api_v1_upload__post"];
 
 // Response types (FastAPI doesn't specify these, so we define them manually)
 export interface ChatSessionResponse {
@@ -16,20 +15,9 @@ export interface UploadResponse {
 }
 
 // Streaming response types
-export interface StreamTokenChunk {
-  type: "token";
-  content: string;
-}
-
-export interface StreamMetadataChunk {
-  type: "metadata";
-  citations?: Array<{
-    content: string;
-    doc_id: string;
-    chunk_id: string;
-  }>;
-  empty?: boolean;
-}
+export type StreamTokenChunk = components["schemas"]["StreamTokenChunk"];
+export type StreamMetadataChunk = components["schemas"]["StreamMetadataChunk"];
+export type StreamCitation = components["schemas"]["StreamCitation"];
 
 export type StreamChunk = StreamTokenChunk | StreamMetadataChunk;
 

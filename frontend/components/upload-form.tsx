@@ -28,8 +28,7 @@ export function UploadForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performUpload = async () => {
     if (!file) return;
 
     setIsUploading(true);
@@ -85,11 +84,16 @@ export function UploadForm() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await performUpload();
+  };
+
   const handleRetry = () => {
     setError(null);
     setProgress(0);
     if (file) {
-      handleSubmit(new Event("submit") as any);
+      void performUpload();
     }
   };
 
