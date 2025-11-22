@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { getChatErrorMessage } from "@/lib/error-messages";
 import { ChatSession, Message } from "@/types";
+import type { ChatSessionResponse, ChatRequest, StreamChunk } from "@/types";
 
 const getAuthToken = () => {
   if (typeof window === "undefined") return null;
@@ -14,7 +15,8 @@ const getAuthToken = () => {
     try {
       const parsed = JSON.parse(raw);
       if (parsed?.access_token) return parsed.access_token;
-      if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
+      if (parsed?.currentSession?.access_token)
+        return parsed.currentSession.access_token;
     } catch {
       return raw;
     }
@@ -30,7 +32,7 @@ export function useChat() {
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [isInitializingSession, setIsInitializingSession] = useState(false);
 
-  const initSession = async () => {
+  const initSession = useCallback(async () => {
     setIsInitializingSession(true);
     setSessionError(null);
     try {
@@ -40,7 +42,7 @@ export function useChat() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
-        const data: ChatSession = await res.json();
+        const data: ChatSessionResponse = await res.json();
         setSessionId(data.session_id);
       } else {
         throw new Error("Session initialization failed");
@@ -54,7 +56,7 @@ export function useChat() {
     } finally {
       setIsInitializingSession(false);
     }
-  };
+  }, []);
 
   const sendMessage = async (query: string) => {
     if (!sessionId) return;
@@ -88,6 +90,7 @@ export function useChat() {
         role: "assistant",
         content: "",
         citations: [],
+        isEmptyResult: false,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -121,6 +124,7 @@ export function useChat() {
             assistantMessage = {
               ...assistantMessage,
               citations: payload.citations,
+              isEmptyResult: Boolean(payload.empty),
             };
           }
 
@@ -136,7 +140,11 @@ export function useChat() {
         try {
           const payload = JSON.parse(buffer);
           if (payload.type === "metadata" && payload.citations) {
-            assistantMessage = { ...assistantMessage, citations: payload.citations };
+            assistantMessage = {
+              ...assistantMessage,
+              citations: payload.citations,
+              isEmptyResult: Boolean(payload.empty),
+            };
             setMessages((prev) => {
               const newMessages = [...prev];
               newMessages[newMessages.length - 1] = assistantMessage;
@@ -174,7 +182,9 @@ export function useChat() {
   };
 
   const removeMessage = (originalQuery: string) => {
-    setMessages((prev) => prev.filter((msg) => msg.originalQuery !== originalQuery));
+    setMessages((prev) =>
+      prev.filter((msg) => msg.originalQuery !== originalQuery)
+    );
   };
 
   return {

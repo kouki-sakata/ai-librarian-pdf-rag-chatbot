@@ -21,4 +21,10 @@ class RetrieverService:
         # 2. Search vector store
         results = await self.vector_store.search(tenant_id, query_embedding, top_k)
 
+        for item in results:
+            meta = item.get("metadata") or {}
+            if item.get("doc_id") and "doc_id" not in meta:
+                meta["doc_id"] = item["doc_id"]
+            item["metadata"] = meta
+
         return results

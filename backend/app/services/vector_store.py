@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
+import hashlib
 from typing import Any
 
 import psycopg
@@ -27,6 +27,13 @@ class VectorStoreService:
         register_vector(conn)
         return conn
 
+    @staticmethod
+    def _set_tenant(cur: psycopg.Cursor, tenant_id: str) -> None:
+        """
+        Set app.tenant_id for the current transaction so RLS policies evaluate correctly.
+        """
+        cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+
     def generate_embeddings(self, chunks: list[str]) -> list[list[float]]:
         """Generate embeddings for a list of text chunks."""
         return self.embeddings.embed_documents(chunks)
@@ -43,10 +50,12 @@ class VectorStoreService:
 
         def _upsert() -> None:
             with self._get_conn() as conn, conn.cursor() as cur:
+                self._set_tenant(cur, tenant_id)
+
                 records = []
                 metadata = metadata_param or []
                 for idx, (chunk, emb) in enumerate(zip(chunks, embeddings)):
-                    chunk_id = hashlib.sha1(chunk.encode("utf-8")).hexdigest()
+                    chunk_hash = hashlib.sha1(chunk.encode("utf-8")).hexdigest()
                     meta = metadata[idx] if idx < len(metadata) else {}
                     meta.setdefault("doc_id", doc_id)
                     meta.setdefault("tenant_id", tenant_id)
@@ -56,7 +65,7 @@ class VectorStoreService:
                         (
                             tenant_id,
                             doc_id,
-                            chunk_id,
+                            chunk_hash,
                             chunk,
                             json.dumps(meta),
                             emb,
@@ -65,9 +74,9 @@ class VectorStoreService:
 
                 cur.executemany(
                     """
-                    INSERT INTO vectors (tenant_id, doc_id, chunk_id, content, metadata, embedding)
+                    INSERT INTO vectors (tenant_id, doc_id, chunk_hash, content, metadata, embedding)
                     VALUES (%s, %s, %s, %s, %s::jsonb, %s)
-                    ON CONFLICT (tenant_id, doc_id, chunk_id) DO UPDATE
+                    ON CONFLICT (tenant_id, doc_id, chunk_hash) DO UPDATE
                     SET content = EXCLUDED.content,
                         metadata = EXCLUDED.metadata,
                         embedding = EXCLUDED.embedding;
@@ -83,6 +92,7 @@ class VectorStoreService:
 
         def _delete() -> None:
             with self._get_conn() as conn, conn.cursor() as cur:
+                self._set_tenant(cur, tenant_id)
                 cur.execute(
                     "DELETE FROM vectors WHERE tenant_id = %s AND doc_id = %s",
                     (tenant_id, doc_id),
@@ -97,9 +107,11 @@ class VectorStoreService:
 
         def _search() -> list[dict[str, Any]]:
             with self._get_conn() as conn, conn.cursor() as cur:
+                self._set_tenant(cur, tenant_id)
                 cur.execute(
                     """
-                    SELECT content,
+                    SELECT doc_id,
+                           content,
                            metadata::jsonb,
                            1 - (embedding <=> %s) AS similarity
                     FROM vectors
@@ -112,9 +124,14 @@ class VectorStoreService:
                 rows = cur.fetchall()
                 return [
                     {
-                        "content": row[0],
-                        "metadata": row[1] or {},
-                        "similarity": float(row[2]) if row[2] is not None else 0.0,
+                        "doc_id": str(row[0]),
+                        "content": row[1],
+                        "metadata": (
+                            json.loads(row[2])
+                            if isinstance(row[2], str)
+                            else (row[2] or {})
+                        ),
+                        "similarity": float(row[3]) if row[3] is not None else 0.0,
                     }
                     for row in rows
                 ]

@@ -37,7 +37,7 @@ export function ChatInterface() {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, []);
+  }, [messages]);
 
   useEffect(() => {
     initSession();
@@ -130,6 +130,7 @@ export function ChatInterface() {
                   role={msg.role}
                   content={msg.content}
                   citations={msg.citations}
+                  isEmptyResult={msg.isEmptyResult}
                 />
               )
             )

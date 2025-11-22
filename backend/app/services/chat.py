@@ -31,13 +31,22 @@ class ChatService:
 
             # 2. Check if chunks are empty
             if not chunks:
+                empty_message = "申し訳ございませんが、アップロードされた資料の中に関連する情報が見つかりませんでした。別の質問をお試しください。"
                 yield json.dumps(
                     {
                         "type": "token",
-                        "content": "申し訳ございませんが、アップロードされた資料の中に関連する情報が見つかりませんでした。別の質問をお試しください。",
+                        "content": empty_message,
                     },
                     ensure_ascii=False,
                 ) + "\n"
+                yield json.dumps(
+                    {"type": "metadata", "citations": [], "empty": True},
+                    ensure_ascii=False,
+                ) + "\n"
+                await self.history.add_message(tenant_id, session_id, "user", query)
+                await self.history.add_message(
+                    tenant_id, session_id, "assistant", empty_message
+                )
                 return
 
             # 3. Construct prompt with citations instruction
@@ -50,6 +59,7 @@ class ChatService:
                 citations.append(
                     {
                         "source": source,
+                        "doc_id": meta.get("doc_id") or item.get("doc_id"),
                         "page": page,
                         "similarity": item.get("similarity"),
                     }
@@ -90,7 +100,12 @@ class ChatService:
 
             # 4.1 Emit citation metadata once streaming finished
             yield json.dumps(
-                {"type": "metadata", "citations": citations}, ensure_ascii=False
+                {
+                    "type": "metadata",
+                    "citations": citations,
+                    "results": len(citations),
+                },
+                ensure_ascii=False,
             ) + "\n"
 
             # 5. Save history

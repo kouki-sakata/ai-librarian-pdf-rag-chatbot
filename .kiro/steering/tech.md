@@ -6,13 +6,13 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 
 ## Core Technologies
 
-- **Language**: TypeScript (frontend), Python 3.11+ (backend)
+- **Language**: TypeScript (frontend), Python 3.12+ (backend)
 - **Framework**: Next.js 16 / React 19（App Router）, FastAPI 0.121
 - **Runtime**: Node.js 20+（Vercel 想定）、Uvicorn（gunicorn worker 経由も可）
 
 ## Key Libraries
 
-- UI: Tailwind CSS + shadcn/ui、react-markdown（回答表示）
+- UI: Tailwind CSS 4 + shadcn/ui、react-markdown（回答表示）
 - API/Domain: FastAPI, Pydantic v2, LangChain 1.0（Retriever/Chat chain）
 - Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW 検索。`SUPABASE_DB_URL` と bucket/role key が前提）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）
@@ -22,31 +22,37 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ## Development Standards
 
 ### Type Safety
+
 - TypeScript は strict モード、`any`/`unknown` 禁止
 - Pydantic v2 モデルで入出力をスキーマ化、mypy で補完
 
 ### Code Quality
-- フロントエンド: Biome で lint/format
+
+- フロントエンド: Biome で lint/format, Knip で未使用コード検出
 - バックエンド: Ruff（lint）＋ optional black/ruff format、一貫した import 並び
 
 ### Auth & Tenant Context
+
 - FastAPI middleware (`core/middleware.py`) で Supabase JWT（RS256 前提）を検証し、`tenant_id` を contextvars にセット
 - API ハンドラ/サービスは context から tenant_id を取得し、Supabase Storage/DB でも同じ tenant 境界を強制
 
 ### Testing
-- Backend: pytest で API/ドメイン、LLM/pgvector はモック or testcontainer を使用
+
+- Backend: pytest で API/ドメイン、LLM/pgvector はモック or testcontainer を使用。Locust で負荷テスト。
 - Frontend: Vitest 4 + Testing Library、ストリーミング表示とエラー UI をカバー
 - 契約: OpenAPI スキーマを基準にリクエスト/レスポンスを型生成し差分検知
 
 ## Development Environment
 
 ### Required Tools
+
 - Node.js 20+, npm または pnpm
 - Python 3.12+, uv/venv
 - Docker Compose（Supabase, pgvector を dev で起動）
 - Supabase CLI（ローカル RLS/ストレージ確認に使用）
 
 ### Common Commands
+
 ```bash
 # Frontend dev: npm run dev --prefix frontend
 # Backend dev: uvicorn app.main:app --reload
@@ -58,7 +64,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ## Key Technical Decisions
 
 - Supabase に認証・ストレージ・Postgres/pgvector を集約し、RLS で `tenant_id` を強制
-- 取り込みは同期フロー（保存→抽出→埋め込み→インデックス）；再処理は置換・トランザクションで原子化
+- 取り込みは同期フロー（保存 → 抽出 → 埋め込み → インデックス）；再処理は置換・トランザクションで原子化
 - Chat API は常に出典付きストリーミング返却を前提（LLM エラー時も明示）
 - OpenAI モデルは設定切替可能にし、温度/トップ k/コンテキスト長を設定ファイル化
 - Observability: ingestion/chat latency と embedding throughput のメトリクスを収集し、閾値越えでアラート
