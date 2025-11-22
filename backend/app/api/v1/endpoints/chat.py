@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.core.context import tenant_id_context
 from app.services.chat import ChatService
+from app.services.history import HistoryService
 
 router = APIRouter()
 
@@ -35,7 +36,10 @@ async def chat_endpoint(request: ChatRequest):
 @router.post("/sessions")
 async def create_session():
     # TODO: Implement session creation logic (DB insert)
-    # For now, just return a mock session ID
-    import uuid
+    tenant_id = tenant_id_context.get()
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="Tenant ID missing")
 
-    return {"session_id": str(uuid.uuid4())}
+    history = HistoryService()
+    session_id = await history.create_session(tenant_id)
+    return {"session_id": session_id}

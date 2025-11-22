@@ -15,11 +15,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in [
             f"{settings.API_V1_STR}/health",
             f"{settings.API_V1_STR}/health/",
+            f"{settings.API_V1_STR}/openapi.json",
             "/docs",
             "/openapi.json",
             "/redoc",
         ]:
             return await call_next(request)
+
 
         # Allow OPTIONS requests for CORS preflight (handled by CORSMiddleware usually, but good to be safe)
         if request.method == "OPTIONS":

@@ -29,8 +29,5 @@ backend/.coverage
 # Gemini
 .gemini
 
-# Codex
+# codex
 .codex
-
-# Agent
-.agent
