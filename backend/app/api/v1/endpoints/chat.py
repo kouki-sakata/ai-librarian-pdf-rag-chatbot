@@ -23,9 +23,12 @@ class StreamTokenChunk(BaseModel):
 
 
 class StreamCitation(BaseModel):
-    doc_id: str
-    content: str
-    chunk_id: str
+    source: str
+    doc_id: str | None = None
+    page: int | None = None
+    similarity: float | None = None
+    content: str | None = None
+    chunk_id: str | None = None
 
 
 class StreamMetadataChunk(BaseModel):

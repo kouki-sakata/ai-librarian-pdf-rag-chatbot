@@ -13,7 +13,9 @@ type RawStreamChunk = Partial<StreamMetadataChunk & StreamTokenChunk> & {
   type?: StreamChunk["type"];
 };
 
-const isTokenChunk = (payload: RawStreamChunk | StreamTokenChunk): payload is StreamTokenChunk =>
+const isTokenChunk = (
+  payload: RawStreamChunk | StreamTokenChunk
+): payload is StreamTokenChunk =>
   payload.type === "token" && typeof payload.content === "string";
 
 const isMetadataChunk = (
@@ -32,7 +34,8 @@ const getAuthToken = () => {
     try {
       const parsed = JSON.parse(raw);
       if (parsed?.access_token) return parsed.access_token;
-      if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
+      if (parsed?.currentSession?.access_token)
+        return parsed.currentSession.access_token;
     } catch {
       return raw;
     }
@@ -142,9 +145,9 @@ export function useChat() {
             assistantMessage = {
               ...assistantMessage,
               citations: metadataPayload.citations?.map((c) => ({
-                source: c.doc_id, // Map doc_id to source
-                similarity: 0, // Default similarity as API doesn't provide it yet
-                page: undefined,
+                source: c.source,
+                similarity: c.similarity ?? undefined,
+                page: c.page ?? undefined,
               })),
               isEmptyResult: Boolean(metadataPayload.empty),
             };
@@ -166,9 +169,9 @@ export function useChat() {
             assistantMessage = {
               ...assistantMessage,
               citations: metadataPayload.citations?.map((c) => ({
-                source: c.doc_id,
-                similarity: 0,
-                page: undefined,
+                source: c.source,
+                similarity: c.similarity ?? undefined,
+                page: c.page ?? undefined,
               })),
               isEmptyResult: Boolean(metadataPayload.empty),
             };
@@ -209,7 +212,9 @@ export function useChat() {
   };
 
   const removeMessage = (originalQuery: string) => {
-    setMessages((prev) => prev.filter((msg) => msg.originalQuery !== originalQuery));
+    setMessages((prev) =>
+      prev.filter((msg) => msg.originalQuery !== originalQuery)
+    );
   };
 
   return {
