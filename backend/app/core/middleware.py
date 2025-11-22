@@ -25,6 +25,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
+        if settings.FORCE_HTTPS:
+            proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+            if proto != "https":
+                return JSONResponse(
+                    status_code=426,
+                    content={"detail": "HTTPS is required for this endpoint"},
+                )
+
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(

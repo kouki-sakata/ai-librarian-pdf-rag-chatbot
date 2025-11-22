@@ -2,19 +2,19 @@
 
 ## Architecture
 
-Hexagonal 構成。Next.js 15 (React 19) フロントと FastAPI バックエンドをポート/アダプターで接続し、ドメインコア（Document, QA）を Supabase の認証・ストレージ・pgvector に集約する。
+Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バックエンドをポート/アダプターで接続し、ドメインコア（Document, QA）を Supabase の認証・ストレージ・pgvector に集約する。
 
 ## Core Technologies
 
 - **Language**: TypeScript (frontend), Python 3.11+ (backend)
-- **Framework**: Next.js 15 / React 19（App Router, Server Actions）, FastAPI 0.115
+- **Framework**: Next.js 16 / React 19（App Router）, FastAPI 0.121
 - **Runtime**: Node.js 20+（Vercel 想定）、Uvicorn（gunicorn worker 経由も可）
 
 ## Key Libraries
 
 - UI: Tailwind CSS + shadcn/ui、react-markdown（回答表示）
 - API/Domain: FastAPI, Pydantic v2, LangChain 1.0（Retriever/Chat chain）
-- Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT
+- Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（現状はサービス層でモック。実 DB/Storage 接続は未実装）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）
 - Parsing/Chunking: pypdf + RecursiveCharacterTextSplitter
 - Tooling: dotenv で設定注入、CORS middleware
@@ -31,14 +31,14 @@ Hexagonal 構成。Next.js 15 (React 19) フロントと FastAPI バックエン
 
 ### Testing
 - Backend: pytest で API/ドメイン、LLM/pgvector はモック or testcontainer を使用
-- Frontend: Vitest + Testing Library、ストリーミング表示とエラー UI をカバー
+- Frontend: Vitest 4 + Testing Library、ストリーミング表示とエラー UI をカバー
 - 契約: OpenAPI スキーマを基準にリクエスト/レスポンスを型生成し差分検知
 
 ## Development Environment
 
 ### Required Tools
 - Node.js 20+, npm または pnpm
-- Python 3.11+, uv/venv
+- Python 3.12+, uv/venv
 - Docker Compose（Supabase, pgvector を dev で起動）
 - Supabase CLI（ローカル RLS/ストレージ確認に使用）
 
@@ -58,5 +58,6 @@ Hexagonal 構成。Next.js 15 (React 19) フロントと FastAPI バックエン
 - Chat API は常に出典付きストリーミング返却を前提（LLM エラー時も明示）
 - OpenAI モデルは設定切替可能にし、温度/トップ k/コンテキスト長を設定ファイル化
 - Observability: ingestion/chat latency と embedding throughput のメトリクスを収集し、閾値越えでアラート
+- OpenTelemetry + Prometheus exporter をバックエンド起動時に常駐させ、9464 ポートでメトリクスを公開
 
-updated_at: 2025-11-21
+updated_at: 2025-11-22

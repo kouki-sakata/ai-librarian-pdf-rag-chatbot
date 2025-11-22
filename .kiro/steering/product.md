@@ -8,7 +8,8 @@ PDF をナレッジ化し、RAG で出典付き回答を返す AI 司書（チ�
 - ベクトル検索 + LLM による出典付き回答（ドキュメント名とページを返す）
 - Supabase Auth + RLS によるテナント分離とアクセスポリシーの一貫適用
 - ストリーミング応答とチャット履歴保持による会話体験の継続性
-- 可観測性指標（ingestion/chat latency, embedding throughput）とアラート閾値を前提にした運用
+- 可観測性指標（ingestion/chat latency, embedding throughput）とアラート閾値を前提にした運用（現行実装は OpenTelemetry + Prometheus エクスポーター起動済み）
+- Supabase Storage / pgvector 連携はインターフェースと設定を先行し、実装はモックで置換可能にしている（本番導入時に差し替え）
 
 ## Target Use Cases
 
@@ -23,4 +24,4 @@ PDF をナレッジ化し、RAG で出典付き回答を返す AI 司書（チ�
 - Hexagonal な分離で UI・LLM・ベクトル層を差し替え容易にし、拡張性を確保
 - 型安全（TypeScript/Pydantic）と静的解析を前提に品質を維持
 
-updated_at: 2025-11-21
+updated_at: 2025-11-22

@@ -1,46 +1,59 @@
 import uuid
+from typing import Any
 
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile, status
 
-# In a real implementation, we would use supabase-py client here.
-# For now, we will structure it but since we don't have the full supabase client setup in requirements yet (or maybe we do via supabase-py),
-# we will assume we use the client.
-# However, the requirements.txt didn't include supabase. I should add it if I want to really use it, or just mock it for now as per "Storage: Supabase Storage (mocked for local tests)" in plan.
-# But the plan said "Supabase Storage (mocked for local tests)", implying we might write the real code but mock it in tests.
-# Let's write the real code structure.
+from app.core.config import settings
+from app.core.supabase_client import get_supabase_client
 
 
 class StorageService:
     @staticmethod
     async def upload_file(file: UploadFile, tenant_id: str) -> str:
-        """
-        Uploads a file to Supabase Storage.
-        Returns the path of the uploaded file.
-        """
-        # Generate a unique document ID
+        """Upload a PDF to Supabase Storage under the tenant namespace."""
         doc_id = str(uuid.uuid4())
-        file_extension = file.filename.split(".")[-1] if "." in file.filename else "pdf"
+        file_extension = (
+            file.filename.split(".")[-1] if "." in file.filename else "pdf"
+        )
         path = f"{tenant_id}/docs/{doc_id}.{file_extension}"
 
-        # Read file content
         content = await file.read()
 
-        # TODO: Integrate with Supabase Client
-        # supabase.storage.from_("documents").upload(path, content)
+        client = get_supabase_client()
+        bucket = settings.SUPABASE_STORAGE_BUCKET
 
-        # For now, we just return the path as if uploaded
-        # In a real app, we would raise HTTPException if upload fails
+        response: Any = client.storage.from_(bucket).upload(
+            path,
+            content,
+            file_options={"content-type": file.content_type or "application/pdf"},
+        )
+
+        if getattr(response, "error", None):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Storage upload failed: {response.error.message}",
+            )
 
         return doc_id
 
     @staticmethod
-    async def download_file(path: str) -> bytes:
-        """
-        Downloads a file from Supabase Storage.
-        """
-        # TODO: Integrate with Supabase Client
-        # response = supabase.storage.from_("documents").download(path)
-        # return response
+    async def download_file(tenant_id: str, path: str) -> bytes:
+        """Download a file with tenant boundary enforcement."""
+        if not path.startswith(f"{tenant_id}/"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tenant scope mismatch for requested file",
+            )
 
-        # Mock return for now (empty bytes or mock content)
-        return b"%PDF-MockContent"
+        client = get_supabase_client()
+        bucket = settings.SUPABASE_STORAGE_BUCKET
+
+        response: Any = client.storage.from_(bucket).download(path)
+
+        if getattr(response, "error", None):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="File not found or access denied",
+            )
+
+        return response
