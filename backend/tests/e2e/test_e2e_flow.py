@@ -61,9 +61,7 @@ def test_e2e_upload_and_chat_flow():
 
         # download_file is called in ingestion.py
         mock_storage_ingestion_instance = MockStorageIngestion.return_value
-        mock_storage_ingestion_instance.download_file = AsyncMock(
-            return_value=pdf_content
-        )
+        mock_storage_ingestion_instance.download_file = AsyncMock(return_value=pdf_content)
 
         # PdfParser
         mock_parser = MockPdfParser.return_value
@@ -126,9 +124,7 @@ def test_e2e_upload_and_chat_flow():
         mock_history.add_message = AsyncMock()
 
         # 1. Upload
-        response = client.post(
-            f"{settings.API_V1_STR}/upload/", files=files, headers=headers
-        )
+        response = client.post(f"{settings.API_V1_STR}/upload/", files=files, headers=headers)
         assert response.status_code == 200, response.text
         data = response.json()
         assert data["filename"] == "e2e_test.pdf"
@@ -144,9 +140,7 @@ def test_e2e_upload_and_chat_flow():
         assert response.status_code == 200
         lines = [line for line in response.text.split("\n") if line.strip()]
         token_text = "".join(
-            json.loads(line)["content"]
-            for line in lines
-            if json.loads(line).get("type") == "token"
+            json.loads(line)["content"] for line in lines if json.loads(line).get("type") == "token"
         )
         assert token_text == "Hello Human"
         assert any(json.loads(line).get("type") == "metadata" for line in lines)

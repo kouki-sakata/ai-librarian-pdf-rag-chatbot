@@ -1,4 +1,5 @@
-from typing import List, Literal, Optional, Union
+from collections.abc import AsyncGenerator
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -29,34 +30,30 @@ class StreamCitation(BaseModel):
 
 class StreamMetadataChunk(BaseModel):
     type: Literal["metadata"] = "metadata"
-    citations: Optional[List[StreamCitation]] = None
-    empty: Optional[bool] = None
+    citations: list[StreamCitation] | None = None
+    empty: bool | None = None
 
 
-StreamChunk = Union[StreamTokenChunk, StreamMetadataChunk]
+StreamChunk = StreamTokenChunk | StreamMetadataChunk
 
 
 @router.post("/", response_model=StreamChunk)
-async def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request: ChatRequest) -> StreamingResponse:
     tenant_id = tenant_id_context.get()
     if not tenant_id:
         raise HTTPException(status_code=401, detail="Tenant ID missing")
 
     service = ChatService()
 
-    async def stream_generator():
-        async for chunk in service.generate_response(
-            tenant_id, request.session_id, request.query
-        ):
+    async def stream_generator() -> AsyncGenerator[str, None]:
+        async for chunk in service.generate_response(tenant_id, request.session_id, request.query):
             yield chunk
 
-    return StreamingResponse(
-        stream_generator(), media_type="application/x-ndjson; charset=utf-8"
-    )
+    return StreamingResponse(stream_generator(), media_type="application/x-ndjson; charset=utf-8")
 
 
 @router.post("/sessions")
-async def create_session():
+async def create_session() -> dict[str, str]:
     # TODO: Implement session creation logic (DB insert)
     tenant_id = tenant_id_context.get()
     if not tenant_id:

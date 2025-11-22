@@ -8,15 +8,16 @@ from typing import Any
 import psycopg
 from langchain_openai import OpenAIEmbeddings
 from pgvector.psycopg import register_vector
+from pydantic import SecretStr
 
 from app.core.config import settings
 
 
 class VectorStoreService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.embeddings = OpenAIEmbeddings(
             model=settings.OPENAI_EMBEDDING_MODEL,
-            api_key=settings.OPENAI_API_KEY,
+            openai_api_key=SecretStr(settings.OPENAI_API_KEY),
         )
         self.conninfo = settings.SUPABASE_DB_URL
 
@@ -127,9 +128,7 @@ class VectorStoreService:
                         "doc_id": str(row[0]),
                         "content": row[1],
                         "metadata": (
-                            json.loads(row[2])
-                            if isinstance(row[2], str)
-                            else (row[2] or {})
+                            json.loads(row[2]) if isinstance(row[2], str) else (row[2] or {})
                         ),
                         "similarity": float(row[3]) if row[3] is not None else 0.0,
                     }

@@ -45,7 +45,6 @@ def test_health_check():
 #     }
 
 
-
 # def test_auth_middleware_invalid_token(mock_verify_jwt):
 #     from fastapi import HTTPException
 #
@@ -54,7 +53,6 @@ def test_health_check():
 #     response = client.get("/", headers={"Authorization": "Bearer invalid-token"})
 #     assert response.status_code == 401
 #     assert response.json() == {"detail": "Invalid token"}
-
 
 
 # def test_auth_middleware_valid_token_missing_tenant(mock_verify_jwt):

@@ -10,7 +10,7 @@ from app.services.retriever import RetrieverService
 
 
 class ChatService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.retriever = RetrieverService()
         self.history = HistoryService()
         # Initialize AsyncOpenAI with settings
@@ -32,21 +32,25 @@ class ChatService:
             # 2. Check if chunks are empty
             if not chunks:
                 empty_message = "申し訳ございませんが、アップロードされた資料の中に関連する情報が見つかりませんでした。別の質問をお試しください。"
-                yield json.dumps(
-                    {
-                        "type": "token",
-                        "content": empty_message,
-                    },
-                    ensure_ascii=False,
-                ) + "\n"
-                yield json.dumps(
-                    {"type": "metadata", "citations": [], "empty": True},
-                    ensure_ascii=False,
-                ) + "\n"
-                await self.history.add_message(tenant_id, session_id, "user", query)
-                await self.history.add_message(
-                    tenant_id, session_id, "assistant", empty_message
+                yield (
+                    json.dumps(
+                        {
+                            "type": "token",
+                            "content": empty_message,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
                 )
+                yield (
+                    json.dumps(
+                        {"type": "metadata", "citations": [], "empty": True},
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+                await self.history.add_message(tenant_id, session_id, "user", query)
+                await self.history.add_message(tenant_id, session_id, "assistant", empty_message)
                 return
 
             # 3. Construct prompt with citations instruction
@@ -64,9 +68,7 @@ class ChatService:
                         "similarity": item.get("similarity"),
                     }
                 )
-                context_blocks.append(
-                    f"[source: {source} page: {page}]\n{item['content']}"
-                )
+                context_blocks.append(f"[source: {source} page: {page}]\n{item['content']}")
 
             context_text = "\n\n".join(context_blocks)
             system_prompt = (
@@ -93,25 +95,29 @@ class ChatService:
                 content = chunk.choices[0].delta.content
                 if content:
                     full_response += content
-                    yield json.dumps(
-                        {"type": "token", "content": content},
-                        ensure_ascii=False,
-                    ) + "\n"
+                    yield (
+                        json.dumps(
+                            {"type": "token", "content": content},
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
 
             # 4.1 Emit citation metadata once streaming finished
-            yield json.dumps(
-                {
-                    "type": "metadata",
-                    "citations": citations,
-                    "results": len(citations),
-                },
-                ensure_ascii=False,
-            ) + "\n"
+            yield (
+                json.dumps(
+                    {
+                        "type": "metadata",
+                        "citations": citations,
+                        "results": len(citations),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
             # 5. Save history
             # Save user message
             await self.history.add_message(tenant_id, session_id, "user", query)
             # Save assistant message
-            await self.history.add_message(
-                tenant_id, session_id, "assistant", full_response
-            )
+            await self.history.add_message(tenant_id, session_id, "assistant", full_response)

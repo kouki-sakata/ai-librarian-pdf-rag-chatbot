@@ -2,6 +2,7 @@ import logging
 import time
 from collections.abc import Generator
 from contextlib import contextmanager
+from typing import Any
 
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
@@ -55,8 +56,8 @@ embedding_token_counter = meter.create_counter(
 @contextmanager
 def measure_latency(
     histogram: metrics.Histogram,
-    attributes: dict = None,
-    threshold_seconds: float = None,
+    attributes: dict[str, Any] | None = None,
+    threshold_seconds: float | None = None,
 ) -> Generator[None, None, None]:
     """
     Context manager to measure execution time and record it to a histogram.

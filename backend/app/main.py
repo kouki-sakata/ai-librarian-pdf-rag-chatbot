@@ -37,5 +37,5 @@ FastAPIInstrumentor.instrument_app(app)
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"message": "Welcome to AI Librarian RAG API"}

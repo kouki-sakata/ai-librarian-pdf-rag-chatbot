@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 @lru_cache(maxsize=1)
 def get_supabase_client() -> Client:
     try:
-        from supabase import Client, create_client
+        from supabase import create_client
     except ImportError as exc:  # pragma: no cover - guarded by dependency
         raise RuntimeError("supabase package is not installed") from exc
 

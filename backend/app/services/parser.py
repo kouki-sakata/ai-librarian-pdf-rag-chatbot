@@ -5,7 +5,7 @@ from pypdf import PdfReader
 
 
 class PdfParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,

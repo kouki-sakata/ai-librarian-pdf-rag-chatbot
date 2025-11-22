@@ -8,9 +8,7 @@ from app.core.security import verify_jwt
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Skip auth for health check and docs
         if request.url.path in [
             f"{settings.API_V1_STR}/health",
@@ -21,7 +19,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/redoc",
         ]:
             return await call_next(request)
-
 
         # Allow OPTIONS requests for CORS preflight (handled by CORSMiddleware usually, but good to be safe)
         if request.method == "OPTIONS":
