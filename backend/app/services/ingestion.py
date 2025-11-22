@@ -13,6 +13,7 @@ class IngestionService:
         """
         Orchestrates the ingestion process.
         """
+        from app.core.config import settings
         from app.core.telemetry import (
             embedding_token_counter,
             ingestion_duration_histogram,
@@ -22,7 +23,7 @@ class IngestionService:
         with measure_latency(
             ingestion_duration_histogram,
             {"tenant_id": tenant_id, "doc_id": doc_id},
-            threshold_seconds=60.0,
+            threshold_seconds=settings.INGESTION_DURATION_THRESHOLD_SECONDS,
         ):
             # 1. Download file from Storage
             file_content = await self.storage.download_file(file_path)

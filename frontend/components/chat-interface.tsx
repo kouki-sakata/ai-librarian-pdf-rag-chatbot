@@ -8,24 +8,24 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ChatMessage } from "./chat-message";
 import { Send, Loader2, RefreshCw, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useChat } from "@/hooks/use-chat";
 import { getChatErrorMessage } from "@/lib/error-messages";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant" | "error";
-  content: string;
-  canRetry?: boolean;
-  originalQuery?: string;
-}
+import { Message } from "@/types";
 
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const {
+    messages,
+    isLoading,
+    sessionId,
+    sessionError,
+    isInitializingSession,
+    initSession,
+    sendMessage,
+    addMessage,
+    removeMessage,
+  } = useChat();
+  
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessionError, setSessionError] = useState<string | null>(null);
-  const [isInitializingSession, setIsInitializingSession] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
@@ -38,106 +38,9 @@ export function ChatInterface() {
     }
   }, [messages]);
 
-  // Initialize session
-  const initSession = async () => {
-    setIsInitializingSession(true);
-    setSessionError(null);
-    try {
-      const res = await fetch("http://localhost:8000/api/v1/chat/sessions", {
-        method: "POST",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSessionId(data.session_id);
-      } else {
-        throw new Error("Session initialization failed");
-      }
-    } catch (error) {
-      const errorMessage = getChatErrorMessage(error, "session");
-      setSessionError(errorMessage);
-      toast.error("セッション初期化失敗", {
-        description: errorMessage,
-      });
-    } finally {
-      setIsInitializingSession(false);
-    }
-  };
-
   useEffect(() => {
     initSession();
   }, []);
-
-  const sendMessage = async (query: string) => {
-    if (!sessionId) return;
-
-    setIsLoading(true);
-
-    try {
-      const res = await fetch("http://localhost:8000/api/v1/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          session_id: sessionId,
-          query: query,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(getChatErrorMessage(res, "message"));
-      }
-      if (!res.body) throw new Error("No response body");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "",
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        
-        assistantMessage = {
-            ...assistantMessage,
-            content: assistantMessage.content + chunk
-        };
-
-        setMessages((prev) => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = assistantMessage;
-            return newMessages;
-        });
-      }
-
-    } catch (error) {
-      const errorMessage = getChatErrorMessage(error, "message");
-      
-      // Add error message to chat
-      const errorMsg: Message = {
-        id: Date.now().toString(),
-        role: "error",
-        content: errorMessage,
-        canRetry: true,
-        originalQuery: query,
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-      
-      toast.error("メッセージ送信失敗", {
-        description: errorMessage,
-        duration: 3000,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,16 +52,14 @@ export function ChatInterface() {
       content: input,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    addMessage(userMessage);
     setInput("");
     
     await sendMessage(userMessage.content);
   };
 
   const handleRetryMessage = (originalQuery: string) => {
-    // Remove the error message
-    setMessages((prev) => prev.filter((msg) => msg.originalQuery !== originalQuery));
-    // Resend the message
+    removeMessage(originalQuery);
     sendMessage(originalQuery);
   };
 

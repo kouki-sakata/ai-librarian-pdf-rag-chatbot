@@ -1,96 +1,110 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { toast } from "sonner"
-import { CheckCircle, File, Loader2, Upload, AlertCircle, RefreshCw } from "lucide-react"
-import { getUploadErrorMessage } from "@/lib/error-messages"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
+import {
+  CheckCircle,
+  File,
+  Loader2,
+  Upload,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
+import { getUploadErrorMessage } from "@/lib/error-messages";
+import { UploadResponse } from "@/types";
 
 export function UploadForm() {
-  const [file, setFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [docId, setDocId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [docId, setDocId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
-      setDocId(null)
-      setProgress(0)
-      setError(null)
+      setFile(e.target.files[0]);
+      setDocId(null);
+      setProgress(0);
+      setError(null);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!file) return
+    e.preventDefault();
+    if (!file) return;
 
-    setIsUploading(true)
-    setProgress(0)
-    setError(null)
+    setIsUploading(true);
+    setProgress(0);
+    setError(null);
 
-    const formData = new FormData()
-    formData.append("file", file)
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
       // Simulate progress
       const interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(interval)
-            return 90
+            clearInterval(interval);
+            return 90;
           }
-          return prev + 10
-        })
-      }, 100)
+          return prev + 10;
+        });
+      }, 100);
 
       const res = await fetch("http://localhost:8000/api/v1/upload/", {
         method: "POST",
         body: formData,
-      })
+      });
 
-      clearInterval(interval)
+      clearInterval(interval);
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}))
-        const errorMessage = errorData.detail || getUploadErrorMessage(res)
-        throw new Error(errorMessage)
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.detail || getUploadErrorMessage(res);
+        throw new Error(errorMessage);
       }
 
-      const data = await res.json()
-      setDocId(data.doc_id)
-      setProgress(100)
-      
+      const data: UploadResponse = await res.json();
+      setDocId(data.doc_id);
+      setProgress(100);
+
       toast.success("アップロード完了", {
         description: `${data.filename} の処理が完了しました`,
         duration: 2000,
-      })
+      });
     } catch (error) {
-      const errorMessage = getUploadErrorMessage(error)
-      setError(errorMessage)
-      
+      const errorMessage = getUploadErrorMessage(error);
+      setError(errorMessage);
+
       toast.error("アップロード失敗", {
         description: errorMessage,
         duration: 3000,
-      })
+      });
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleRetry = () => {
-    setError(null)
-    setProgress(0)
+    setError(null);
+    setProgress(0);
     if (file) {
-      handleSubmit(new Event("submit") as any)
+      handleSubmit(new Event("submit") as any);
     }
-  }
+  };
 
   return (
     <Card className="w-full">
@@ -117,7 +131,9 @@ export function UploadForm() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <File className="h-4 w-4" />
               <span className="truncate">{file.name}</span>
-              <span className="ml-auto">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+              <span className="ml-auto">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </span>
             </div>
           )}
 
@@ -143,7 +159,9 @@ export function UploadForm() {
           {isUploading && (
             <div className="space-y-2">
               <Progress value={progress} />
-              <p className="text-xs text-center text-muted-foreground">アップロード中... {progress}%</p>
+              <p className="text-xs text-center text-muted-foreground">
+                アップロード中... {progress}%
+              </p>
             </div>
           )}
 
@@ -154,7 +172,11 @@ export function UploadForm() {
             </div>
           )}
 
-          <Button type="submit" disabled={!file || isUploading} className="w-full">
+          <Button
+            type="submit"
+            disabled={!file || isUploading}
+            className="w-full"
+          >
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -170,6 +192,5 @@ export function UploadForm() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
-
