@@ -2,10 +2,11 @@ import os
 import time
 
 import pytest
-from app.core.config import settings
-from app.main import app
 from fastapi.testclient import TestClient
 from jose import jwt
+
+from app.core.config import settings
+from app.main import app
 
 # Ensure test secret is set
 os.environ["SUPABASE_JWT_SECRET"] = "test-secret"

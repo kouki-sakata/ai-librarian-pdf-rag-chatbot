@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from app.services.vector_store import VectorStoreService
 
@@ -9,7 +9,7 @@ class RetrieverService:
 
     async def retrieve(
         self, tenant_id: str, query: str, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieves relevant chunks for a query.
         """

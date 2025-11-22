@@ -1,15 +1,16 @@
 import logging
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
-from app.core.config import settings
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from prometheus_client import start_http_server
+
+from app.core.config import settings
 
 # Setup Logger
 logger = logging.getLogger(__name__)

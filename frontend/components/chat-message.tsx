@@ -1,9 +1,7 @@
-import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Message } from "@/types";
 import { cn } from "@/lib/utils";
-import { User, Bot, AlertCircle } from "lucide-react";
+import { Message } from "@/types";
 
 interface ChatMessageProps {
   role: Message["role"];
@@ -12,12 +10,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ role, content }: ChatMessageProps) {
   return (
-    <div
-      className={cn(
-        "flex w-full mb-4",
-        role === "user" ? "justify-end" : "justify-start"
-      )}
-    >
+    <div className={cn("flex w-full mb-4", role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
           "max-w-[80%] rounded-lg px-4 py-2 text-sm",

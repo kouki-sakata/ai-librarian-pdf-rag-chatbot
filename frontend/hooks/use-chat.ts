@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Message, ChatSession } from "@/types";
-import { getChatErrorMessage } from "@/lib/error-messages";
 import { toast } from "sonner";
+import { getChatErrorMessage } from "@/lib/error-messages";
+import { ChatSession, Message } from "@/types";
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -110,9 +110,7 @@ export function useChat() {
   };
 
   const removeMessage = (originalQuery: string) => {
-    setMessages((prev) =>
-      prev.filter((msg) => msg.originalQuery !== originalQuery)
-    );
+    setMessages((prev) => prev.filter((msg) => msg.originalQuery !== originalQuery));
   };
 
   return {

@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 from langchain_openai import OpenAIEmbeddings
 
@@ -22,7 +21,7 @@ class VectorStoreService:
             or "mock-key",  # Prevent init failure in tests if env missing
         )
 
-    def generate_embeddings(self, chunks: List[str]) -> List[List[float]]:
+    def generate_embeddings(self, chunks: list[str]) -> list[list[float]]:
         """
         Generates embeddings for a list of text chunks.
         """
@@ -38,8 +37,8 @@ class VectorStoreService:
         self,
         tenant_id: str,
         doc_id: str,
-        chunks: List[str],
-        embeddings: List[List[float]],
+        chunks: list[str],
+        embeddings: list[list[float]],
     ):
         """
         Upserts vectors into the database.
@@ -58,8 +57,8 @@ class VectorStoreService:
         pass
 
     def search(
-        self, tenant_id: str, query_embedding: List[float], top_k: int = 5
-    ) -> List[dict]:
+        self, tenant_id: str, query_embedding: list[float], top_k: int = 5
+    ) -> list[dict]:
         """
         Searches for similar vectors.
         """

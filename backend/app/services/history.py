@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.config import settings
 
@@ -46,7 +46,7 @@ class HistoryService:
 
     async def get_history(
         self, tenant_id: str, session_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieves chat history for a session.
         """
