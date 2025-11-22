@@ -23,8 +23,10 @@ trace.set_tracer_provider(TracerProvider(resource=resource))
 tracer = trace.get_tracer(__name__)
 
 # Meter Provider with Prometheus Exporter
-# Start Prometheus client
-start_http_server(port=9464, addr="0.0.0.0")
+if settings.METRICS_SERVER_ENABLED:
+    # Start Prometheus client only when enabled to avoid bind errors in restricted envs/tests
+    start_http_server(port=9464, addr="0.0.0.0")
+
 reader = PrometheusMetricReader()
 provider = MeterProvider(resource=resource, metric_readers=[reader])
 metrics.set_meter_provider(provider)

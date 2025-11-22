@@ -12,6 +12,10 @@ from app.main import app
 os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
 settings.SUPABASE_JWT_SECRET = "test-secret"
 
+# Disable Prometheus HTTP server during tests to avoid bind failures in sandboxed CI
+os.environ.setdefault("METRICS_SERVER_ENABLED", "false")
+settings.METRICS_SERVER_ENABLED = False
+
 
 @pytest.fixture
 def client():

@@ -1,5 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import json
+
 import pytest
 
 from app.services.chat import ChatService
@@ -18,7 +20,7 @@ MOCK_ANSWER = "The summary is..."
 def mock_vector_store():
     with patch("app.services.retriever.VectorStoreService") as mock:
         instance = mock.return_value
-        instance.search.return_value = MOCK_CHUNKS
+        instance.search = AsyncMock(return_value=MOCK_CHUNKS)
         instance.generate_embeddings.return_value = [[0.1, 0.2]]
         yield instance
 
@@ -75,8 +77,13 @@ async def test_generate_answer_flow(
     async for chunk in response_generator:
         chunks.append(chunk)
 
-    full_response = "".join(chunks)
-    assert "The summary is..." in full_response
+    # Extract streamed token contents and ensure they combine to expected text
+    token_text = "".join(
+        json.loads(item)["content"]
+        for item in chunks
+        if json.loads(item).get("type") == "token"
+    )
+    assert token_text == "The summary is..."
 
     # Verify interactions
     mock_vector_store.search.assert_called()  # Retrieval happened
@@ -90,5 +97,5 @@ async def test_generate_answer_flow(
     )
     # Check assistant message saved (full response)
     mock_history_service.add_message.assert_any_call(
-        "tenant1", "session1", "assistant", full_response
+        "tenant1", "session1", "assistant", token_text
     )

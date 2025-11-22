@@ -1,22 +1,16 @@
 from typing import Any
 
-from app.core.config import settings
+from app.core.supabase_client import get_supabase_client
 
-# We need a supabase client. Since we haven't initialized a global one yet properly,
-# we'll assume a simple client wrapper or use the library directly if configured.
-# For now, we'll mock/stub it or use a placeholder if not fully integrated.
-# But to make the test pass (which mocks 'app.services.history.supabase'), we need to import it.
+# Module-level client placeholder to ease patching in tests
+supabase = None
 
-# In a real app, we'd have a singleton Supabase client.
-# Let's define a placeholder for now that the test mocks.
-try:
-    from supabase import Client, create_client
 
-    supabase: Client = create_client(
-        settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY
-    )
-except ImportError:
-    supabase = None  # For environments without supabase-py installed or configured
+def _get_client():
+    global supabase
+    if supabase is None:
+        supabase = get_supabase_client()
+    return supabase
 
 
 class HistoryService:
@@ -24,9 +18,8 @@ class HistoryService:
         """
         Creates a new chat session.
         """
-        response = (
-            supabase.table("chat_sessions").insert({"tenant_id": tenant_id}).execute()
-        )
+        client = _get_client()
+        response = client.table("chat_sessions").insert({"tenant_id": tenant_id}).execute()
         return response.data[0]["id"]
 
     async def add_message(
@@ -35,7 +28,8 @@ class HistoryService:
         """
         Adds a message to the session history.
         """
-        supabase.table("chat_messages").insert(
+        client = _get_client()
+        client.table("chat_messages").insert(
             {
                 "tenant_id": tenant_id,
                 "session_id": session_id,
@@ -50,8 +44,9 @@ class HistoryService:
         """
         Retrieves chat history for a session.
         """
+        client = _get_client()
         response = (
-            supabase.table("chat_messages")
+            client.table("chat_messages")
             .select("*")
             .eq("tenant_id", tenant_id)
             .eq("session_id", session_id)

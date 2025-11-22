@@ -28,8 +28,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Lint (Biome)
-        run: npm run lint:biome
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
         run: npm run test
@@ -69,3 +69,6 @@ jobs:
         env:
           SUPABASE_URL: "https://test.supabase.co"
           SUPABASE_PROJECT_REF: "test-project"
+          METRICS_SERVER_ENABLED: "false"
+          OPENAI_API_KEY: "test-key"
+          SUPABASE_SERVICE_ROLE_KEY: "test-key"
