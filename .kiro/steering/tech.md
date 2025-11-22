@@ -17,7 +17,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 - Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW 検索。`SUPABASE_DB_URL` と bucket/role key が前提）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）
 - Parsing/Chunking: pypdf + RecursiveCharacterTextSplitter
-- Tooling: dotenv で設定注入、CORS middleware
+- Tooling: dotenv で設定注入、CORS middleware、openapi-typescript（型生成）
 
 ## Development Standards
 
@@ -40,7 +40,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 
 - Backend: pytest で API/ドメイン、LLM/pgvector はモック or testcontainer を使用。Locust で負荷テスト。
 - Frontend: Vitest 4 + Testing Library、ストリーミング表示とエラー UI をカバー
-- 契約: OpenAPI スキーマを基準にリクエスト/レスポンスを型生成し差分検知
+- 契約: OpenAPI スキーマから `openapi-typescript` で型生成し、フロントエンドの型安全性を担保
 
 ## Development Environment
 
@@ -56,9 +56,13 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ```bash
 # Frontend dev: npm run dev --prefix frontend
 # Backend dev: uvicorn app.main:app --reload
+# Backend commands (Makefile):
+#   make lint       - Run ruff linter
+#   make lint-fix   - Run ruff linter with auto-fix
+#   make format     - Run ruff formatter
+#   make typecheck  - Run mypy type checker
+#   make test       - Run pytest
 # Frontend test: npm test --prefix frontend
-# Backend test: pytest
-# Lint: npm run lint --prefix frontend && ruff check backend
 ```
 
 ## Key Technical Decisions
