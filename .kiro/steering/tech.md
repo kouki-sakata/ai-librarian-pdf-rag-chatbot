@@ -14,7 +14,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 
 - UI: Tailwind CSS + shadcn/ui、react-markdown（回答表示）
 - API/Domain: FastAPI, Pydantic v2, LangChain 1.0（Retriever/Chat chain）
-- Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（現状はサービス層でモック。実 DB/Storage 接続は未実装）
+- Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW 検索。`SUPABASE_DB_URL` と bucket/role key が前提）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）
 - Parsing/Chunking: pypdf + RecursiveCharacterTextSplitter
 - Tooling: dotenv で設定注入、CORS middleware
@@ -28,6 +28,10 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ### Code Quality
 - フロントエンド: Biome で lint/format
 - バックエンド: Ruff（lint）＋ optional black/ruff format、一貫した import 並び
+
+### Auth & Tenant Context
+- FastAPI middleware (`core/middleware.py`) で Supabase JWT（RS256 前提）を検証し、`tenant_id` を contextvars にセット
+- API ハンドラ/サービスは context から tenant_id を取得し、Supabase Storage/DB でも同じ tenant 境界を強制
 
 ### Testing
 - Backend: pytest で API/ドメイン、LLM/pgvector はモック or testcontainer を使用
@@ -58,6 +62,6 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 - Chat API は常に出典付きストリーミング返却を前提（LLM エラー時も明示）
 - OpenAI モデルは設定切替可能にし、温度/トップ k/コンテキスト長を設定ファイル化
 - Observability: ingestion/chat latency と embedding throughput のメトリクスを収集し、閾値越えでアラート
-- OpenTelemetry + Prometheus exporter をバックエンド起動時に常駐させ、9464 ポートでメトリクスを公開
+- OpenTelemetry + Prometheus exporter は `METRICS_SERVER_ENABLED=true` のときのみ 9464 ポートで公開（デフォルト有効だが CI では無効化を推奨）
 
 updated_at: 2025-11-22
