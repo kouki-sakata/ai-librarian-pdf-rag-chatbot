@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences
+POST,/api/v1/upload/,"CatchResponseError('Upload failed: 500 {""detail"":""Failed to process file: Failed to parse PDF: Stream has ended unexpectedly""}')",24

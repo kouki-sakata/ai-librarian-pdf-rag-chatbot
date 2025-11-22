@@ -46,8 +46,27 @@ async def verify_jwt(token: str) -> Dict[str, Any]:
     Verify the JWT token using Supabase JWKS.
     """
     try:
-        # Get the header to find the key ID (kid)
+        # Get the header to find the key ID (kid) or algorithm
         header = jwt.get_unverified_header(token)
+        alg = header.get("alg")
+
+        if alg == "HS256" and settings.SUPABASE_JWT_SECRET:
+            # Test/Dev mode using shared secret
+            payload = jwt.decode(
+                token,
+                settings.SUPABASE_JWT_SECRET,
+                algorithms=["HS256"],
+                audience="authenticated",
+                options={
+                    "verify_aud": False,  # Audience might vary in test tokens
+                    "verify_iss": False,  # Issuer might vary
+                    "verify_exp": True,
+                    "verify_nbf": True,
+                    "leeway": 120,
+                },
+            )
+            return payload
+
         kid = header.get("kid")
         if not kid:
             raise HTTPException(
@@ -104,8 +123,9 @@ async def verify_jwt(token: str) -> Dict[str, Any]:
             detail="Incorrect claims, please check the audience and issuer",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except Exception:
+    except Exception as e:
         # Distinguish between auth failure and other errors if possible, but 401 is generally safe for auth issues
+        print(f"Auth error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

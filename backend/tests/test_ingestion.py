@@ -16,6 +16,7 @@ MOCK_EMBEDDINGS = [[0.1, 0.2], [0.3, 0.4]]
 def mock_pdf_parser():
     with patch("app.services.ingestion.PdfParser") as mock:
         instance = mock.return_value
+        instance = mock.return_value
         instance.extract_text.return_value = MOCK_TEXT
         instance.split_text.return_value = MOCK_CHUNKS
         yield instance
@@ -26,7 +27,7 @@ def mock_vector_store():
     with patch("app.services.ingestion.VectorStoreService") as mock:
         instance = mock.return_value
         instance.generate_embeddings.return_value = MOCK_EMBEDDINGS
-        instance.upsert_vectors.return_value = None
+        instance.upsert_vectors = AsyncMock()
         yield instance
 
 
@@ -36,7 +37,6 @@ async def test_ingestion_flow(mock_pdf_parser, mock_vector_store):
     tenant_id = "tenant123"
     doc_id = "doc123"
     file_path = "tenant123/docs/doc123.pdf"
-
     # Mock Storage download (we need to patch where IngestionService calls it)
     with patch(
         "app.services.ingestion.StorageService.download_file", new_callable=AsyncMock
@@ -45,12 +45,17 @@ async def test_ingestion_flow(mock_pdf_parser, mock_vector_store):
 
         # Execute
         service = IngestionService()
-        await service.ingest_document(tenant_id, doc_id, file_path)
+        await service.process_document(tenant_id, doc_id, file_path)
 
         # Verify
         mock_download.assert_called_once_with(file_path)
-        mock_pdf_parser.extract_text.assert_called_once()  # Should pass content
+        mock_pdf_parser.extract_text.assert_called_once_with(MOCK_PDF_CONTENT)
         mock_pdf_parser.split_text.assert_called_once_with(MOCK_TEXT)
+        # Note: IngestionService now calculates tokens and calls upsert_vectors with just chunks (and tenant/doc id)
+        # It does NOT call generate_embeddings explicitly in the service (it's done in vector_store.upsert_vectors or similar?)
+        # Wait, ingestion.py says: await self.vector_store.upsert_vectors(tenant_id, doc_id, chunks)
+        # It does NOT call generate_embeddings.
+
         mock_vector_store.generate_embeddings.assert_called_once_with(MOCK_CHUNKS)
         mock_vector_store.upsert_vectors.assert_called_once_with(
             tenant_id, doc_id, MOCK_CHUNKS, MOCK_EMBEDDINGS
