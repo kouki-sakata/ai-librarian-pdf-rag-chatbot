@@ -1,9 +1,10 @@
-from app.core.config import settings
-from app.core.context import tenant_id_context
-from app.core.security import verify_jwt
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+
+from app.core.config import settings
+from app.core.context import tenant_id_context
+from app.core.security import verify_jwt
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

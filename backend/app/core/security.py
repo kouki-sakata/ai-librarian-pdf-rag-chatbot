@@ -1,17 +1,18 @@
 import time
-from typing import Any, Dict
+from typing import Any
 
 import httpx
-from app.core.config import settings
 from fastapi import HTTPException, status
 from jose import jwt
 
+from app.core.config import settings
+
 # Cache for JWKS
-jwks_cache: Dict[str, Any] = {}
+jwks_cache: dict[str, Any] = {}
 JWKS_CACHE_TTL = 600  # 10 minutes
 
 
-async def get_jwks() -> Dict[str, Any]:
+async def get_jwks() -> dict[str, Any]:
     """
     Fetch JWKS from Supabase with caching.
     """
@@ -41,7 +42,7 @@ async def get_jwks() -> Dict[str, Any]:
         )
 
 
-async def verify_jwt(token: str) -> Dict[str, Any]:
+async def verify_jwt(token: str) -> dict[str, Any]:
     """
     Verify the JWT token using Supabase JWKS.
     """

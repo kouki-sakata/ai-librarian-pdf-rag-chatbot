@@ -1,27 +1,14 @@
 "use client";
 
+import { AlertCircle, CheckCircle, File, Loader2, RefreshCw, Upload } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { toast } from "sonner";
-import {
-  CheckCircle,
-  File,
-  Loader2,
-  Upload,
-  AlertCircle,
-  RefreshCw,
-} from "lucide-react";
 import { getUploadErrorMessage } from "@/lib/error-messages";
 import { UploadResponse } from "@/types";
 
@@ -33,7 +20,7 @@ export function UploadForm() {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       setFile(e.target.files[0]);
       setDocId(null);
       setProgress(0);
@@ -131,9 +118,7 @@ export function UploadForm() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <File className="h-4 w-4" />
               <span className="truncate">{file.name}</span>
-              <span className="ml-auto">
-                {(file.size / 1024 / 1024).toFixed(2)} MB
-              </span>
+              <span className="ml-auto">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
             </div>
           )}
 
@@ -172,11 +157,7 @@ export function UploadForm() {
             </div>
           )}
 
-          <Button
-            type="submit"
-            disabled={!file || isUploading}
-            className="w-full"
-          >
+          <Button type="submit" disabled={!file || isUploading} className="w-full">
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

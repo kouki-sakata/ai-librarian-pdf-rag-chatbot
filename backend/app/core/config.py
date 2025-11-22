@@ -1,4 +1,3 @@
-from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,7 +15,7 @@ class Settings(BaseSettings):
     )
 
     # CORS Settings
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
     # Observability Thresholds
     INGESTION_DURATION_THRESHOLD_SECONDS: float = 60.0

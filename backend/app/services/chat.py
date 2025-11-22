@@ -1,9 +1,10 @@
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+
+from openai import AsyncOpenAI
 
 from app.services.history import HistoryService
 from app.services.retriever import RetrieverService
-from openai import AsyncOpenAI
 
 
 class ChatService:
@@ -39,7 +40,7 @@ class ChatService:
             context_text = "\n\n".join([chunk["content"] for chunk in chunks])
             system_prompt = f"""You are a helpful AI librarian. Use the following context to answer the user's question.
             If the answer is not in the context, say you don't know.
-            
+
             Context:
             {context_text}
             """

@@ -1,8 +1,9 @@
-from app.core.context import tenant_id_context
-from app.services.chat import ChatService
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+from app.core.context import tenant_id_context
+from app.services.chat import ChatService
 
 router = APIRouter()
 
