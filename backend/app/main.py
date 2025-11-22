@@ -22,7 +22,7 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 # Add Auth Middleware
-app.add_middleware(AuthMiddleware)
+# app.add_middleware(AuthMiddleware)
 
 # Include routers
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
