@@ -1,8 +1,25 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { getChatErrorMessage } from "@/lib/error-messages";
-import { ChatSession, Message } from "@/types";
-import type { ChatSessionResponse, ChatRequest, StreamChunk } from "@/types";
+import type {
+  ChatSessionResponse,
+  Message,
+  StreamChunk,
+  StreamMetadataChunk,
+  StreamTokenChunk,
+} from "@/types";
+
+type RawStreamChunk = Partial<StreamMetadataChunk & StreamTokenChunk> & {
+  type?: StreamChunk["type"];
+};
+
+const isTokenChunk = (payload: RawStreamChunk | StreamTokenChunk): payload is StreamTokenChunk =>
+  payload.type === "token" && typeof payload.content === "string";
+
+const isMetadataChunk = (
+  payload: RawStreamChunk | StreamMetadataChunk
+): payload is StreamMetadataChunk =>
+  payload.type === "metadata" && Array.isArray(payload.citations);
 
 const getAuthToken = () => {
   if (typeof window === "undefined") return null;
@@ -15,8 +32,7 @@ const getAuthToken = () => {
     try {
       const parsed = JSON.parse(raw);
       if (parsed?.access_token) return parsed.access_token;
-      if (parsed?.currentSession?.access_token)
-        return parsed.currentSession.access_token;
+      if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
     } catch {
       return raw;
     }
@@ -105,26 +121,32 @@ export function useChat() {
 
         for (const line of lines) {
           if (!line.trim()) continue;
-          let payload: any;
+          let payload: RawStreamChunk;
           try {
-            payload = JSON.parse(line);
+            payload = JSON.parse(line) as RawStreamChunk;
           } catch (err) {
             console.warn("Failed to parse stream line", line, err);
             continue;
           }
 
-          if (payload.type === "token" && payload.content) {
+          if (isTokenChunk(payload)) {
+            const tokenPayload = payload as StreamTokenChunk;
             assistantMessage = {
               ...assistantMessage,
-              content: assistantMessage.content + payload.content,
+              content: assistantMessage.content + tokenPayload.content,
             };
           }
 
-          if (payload.type === "metadata" && payload.citations) {
+          if (isMetadataChunk(payload)) {
+            const metadataPayload = payload as StreamMetadataChunk;
             assistantMessage = {
               ...assistantMessage,
-              citations: payload.citations,
-              isEmptyResult: Boolean(payload.empty),
+              citations: metadataPayload.citations?.map((c) => ({
+                source: c.doc_id, // Map doc_id to source
+                similarity: 0, // Default similarity as API doesn't provide it yet
+                page: undefined,
+              })),
+              isEmptyResult: Boolean(metadataPayload.empty),
             };
           }
 
@@ -138,12 +160,17 @@ export function useChat() {
 
       if (buffer.trim()) {
         try {
-          const payload = JSON.parse(buffer);
-          if (payload.type === "metadata" && payload.citations) {
+          const payload = JSON.parse(buffer) as RawStreamChunk;
+          if (isMetadataChunk(payload)) {
+            const metadataPayload = payload as StreamMetadataChunk;
             assistantMessage = {
               ...assistantMessage,
-              citations: payload.citations,
-              isEmptyResult: Boolean(payload.empty),
+              citations: metadataPayload.citations?.map((c) => ({
+                source: c.doc_id,
+                similarity: 0,
+                page: undefined,
+              })),
+              isEmptyResult: Boolean(metadataPayload.empty),
             };
             setMessages((prev) => {
               const newMessages = [...prev];
@@ -182,9 +209,7 @@ export function useChat() {
   };
 
   const removeMessage = (originalQuery: string) => {
-    setMessages((prev) =>
-      prev.filter((msg) => msg.originalQuery !== originalQuery)
-    );
+    setMessages((prev) => prev.filter((msg) => msg.originalQuery !== originalQuery));
   };
 
   return {

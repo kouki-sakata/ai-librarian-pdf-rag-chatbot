@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @lru_cache(maxsize=1)
-def get_supabase_client() -> "Client":
+def get_supabase_client() -> Client:
     try:
         from supabase import Client, create_client
     except ImportError as exc:  # pragma: no cover - guarded by dependency

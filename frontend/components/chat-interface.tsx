@@ -37,7 +37,7 @@ export function ChatInterface() {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [messages]);
+  }, []);
 
   useEffect(() => {
     initSession();
@@ -59,7 +59,8 @@ export function ChatInterface() {
     await sendMessage(userMessage.content);
   };
 
-  const handleRetryMessage = (originalQuery: string) => {
+  const handleRetryMessage = (originalQuery?: string) => {
+    if (!originalQuery) return;
     removeMessage(originalQuery);
     sendMessage(originalQuery);
   };
@@ -114,7 +115,7 @@ export function ChatInterface() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRetryMessage(msg.originalQuery!)}
+                          onClick={() => handleRetryMessage(msg.originalQuery)}
                           className="ml-2"
                         >
                           <RefreshCw className="mr-2 h-3 w-3" />

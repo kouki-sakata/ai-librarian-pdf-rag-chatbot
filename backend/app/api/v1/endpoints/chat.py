@@ -1,3 +1,5 @@
+from typing import List, Literal, Optional, Union
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -14,7 +16,27 @@ class ChatRequest(BaseModel):
     query: str
 
 
-@router.post("/")
+class StreamTokenChunk(BaseModel):
+    type: Literal["token"] = "token"
+    content: str
+
+
+class StreamCitation(BaseModel):
+    doc_id: str
+    content: str
+    chunk_id: str
+
+
+class StreamMetadataChunk(BaseModel):
+    type: Literal["metadata"] = "metadata"
+    citations: Optional[List[StreamCitation]] = None
+    empty: Optional[bool] = None
+
+
+StreamChunk = Union[StreamTokenChunk, StreamMetadataChunk]
+
+
+@router.post("/", response_model=StreamChunk)
 async def chat_endpoint(request: ChatRequest):
     tenant_id = tenant_id_context.get()
     if not tenant_id:
