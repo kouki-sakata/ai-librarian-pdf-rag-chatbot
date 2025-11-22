@@ -14,8 +14,8 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 
 ### Backend (FastAPI)
 **Location**: `/backend/`  
-**Purpose**: FastAPI エンドポイントを `app/api/v1/endpoints` に配置し、処理は `app/services` にまとめるシンプルなサービスレイヤ構成。設定・CORS・メトリクスは `app/core` に集約（`telemetry.py` が OpenTelemetry + Prometheus exporter を起動）。  
-**Example**: `app/api/v1/endpoints/upload.py` → `IngestionService` が `StorageService`（Supabase Storage 想定、現状モック）と `VectorStoreService`（pgvector 予定、現状モック）をオーケストレーション。
+**Purpose**: FastAPI エンドポイントを `app/api/v1/endpoints` に配置し、処理は `app/services` にまとめるシンプルなサービスレイヤ構成。`app/core` に設定・CORS・メトリクスのほか Supabase JWT 検証ミドルウェアと supabase-py クライアント生成を集約（`telemetry.py` が OpenTelemetry + Prometheus exporter を起動）。  
+**Example**: `app/api/v1/endpoints/upload.py` → `IngestionService` が `StorageService`（supabase-py で Storage バケットへ書き込み）と `VectorStoreService`（psycopg + pgvector でベクトル upsert/search）をオーケストレーション。チャット履歴は `HistoryService` が Supabase テーブル `chat_sessions/chat_messages` を介して管理。
 
 ### Contracts & Shared Schemas
 **Location**: `/backend/app/core` で設定・セキュリティ、`/backend/app/services` で I/O 境界を抽象化。フロントは `frontend/types` にチャット/アップロード DTO を定義。現状 OpenAPI 生成クライアントは未導入。
@@ -47,9 +47,9 @@ from app.services.vector_store import VectorStoreService
 ## Code Organization Principles
 
 - UI は App Router のページで状態を保持し、API 呼び出し（fetch）と hook 経由でチャット/アップロードを制御
-- サービス層は Supabase Storage・pgvector・OpenAI へのアクセスを抽象化（現在はモック実装。実ストレージ/ベクトル接続時に差し替え）
+- サービス層は Supabase Storage（bucket namespaced by tenant）・pgvector（HNSW index）・OpenAI へのアクセスを抽象化し、`SUPABASE_DB_URL`/service role key が未設定の場合は明示的に失敗させる
 - すべての操作で `tenant_id` / `session_id` を受け取り、テナント境界をアプリ層で明示（RLS 適用は今後の統合）
 - 取り込みフローは「保存→抽出→embed→index」を単一サービスで直列実行し、メトリクスで閾値監視
-- Chat 応答はストリーミングを前提にし、エラー時は UI へ明示的にトースト + メッセージを返す
+- Chat 応答は NDJSON ストリーミングを前提にし、エラー時は UI へ明示的にトースト + メッセージを返す
 
 updated_at: 2025-11-22

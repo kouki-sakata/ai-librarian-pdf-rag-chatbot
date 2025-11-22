@@ -9,7 +9,7 @@ PDF をナレッジ化し、RAG で出典付き回答を返す AI 司書（チ�
 - Supabase Auth + RLS によるテナント分離とアクセスポリシーの一貫適用
 - ストリーミング応答とチャット履歴保持による会話体験の継続性
 - 可観測性指標（ingestion/chat latency, embedding throughput）とアラート閾値を前提にした運用（現行実装は OpenTelemetry + Prometheus エクスポーター起動済み）
-- Supabase Storage / pgvector 連携はインターフェースと設定を先行し、実装はモックで置換可能にしている（本番導入時に差し替え）
+- Supabase Storage / pgvector 連携は supabase-py + psycopg/pgvector で本番接続（`SUPABASE_DB_URL`, `SUPABASE_STORAGE_BUCKET` 必須）。RLS 付きテーブル（documents/vectors/chat_sessions/chat_messages）に tenant_id を強制し、チャット履歴も Supabase へ保存
 
 ## Target Use Cases
 
