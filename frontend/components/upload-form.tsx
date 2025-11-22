@@ -1,42 +1,39 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, File, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
+import { CheckCircle, File, Loader2, Upload, AlertCircle, RefreshCw } from "lucide-react"
+import { getUploadErrorMessage } from "@/lib/error-messages"
 
 export function UploadForm() {
   const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [docId, setDocId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0]
-      if (selectedFile.type !== "application/pdf") {
-        toast.error("PDFファイルのみアップロード可能です")
-        return
-      }
-      if (selectedFile.size > 50 * 1024 * 1024) {
-        toast.error("ファイルサイズは50MB以下にしてください")
-        return
-      }
-      setFile(selectedFile)
+      setFile(e.target.files[0])
       setDocId(null)
       setProgress(0)
+      setError(null)
     }
   }
 
-  const handleUpload = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!file) return
 
-    setUploading(true)
-    setProgress(10) // Start progress
+    setIsUploading(true)
+    setProgress(0)
+    setError(null)
 
     const formData = new FormData()
     formData.append("file", file)
@@ -51,81 +48,128 @@ export function UploadForm() {
           }
           return prev + 10
         })
-      }, 500)
+      }, 100)
 
-      // TODO: Replace with actual API call
-      // const response = await fetch("/api/v1/upload", {
-      //   method: "POST",
-      //   body: formData,
-      //   headers: {
-      //     "Authorization": `Bearer ${token}` // Need auth token
-      //   }
-      // })
-      
-      // Mocking API call for UI dev
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const res = await fetch("http://localhost:8000/api/v1/upload/", {
+        method: "POST",
+        body: formData,
+      })
+
       clearInterval(interval)
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        const errorMessage = errorData.detail || getUploadErrorMessage(res)
+        throw new Error(errorMessage)
+      }
+
+      const data = await res.json()
+      setDocId(data.doc_id)
       setProgress(100)
       
-      setDocId("mock-doc-id")
-      toast.success("アップロードが完了しました")
-      
+      toast.success("アップロード完了", {
+        description: `${data.filename} の処理が完了しました`,
+        duration: 2000,
+      })
     } catch (error) {
-      toast.error("アップロードに失敗しました")
-      console.error(error)
+      const errorMessage = getUploadErrorMessage(error)
+      setError(errorMessage)
+      
+      toast.error("アップロード失敗", {
+        description: errorMessage,
+        duration: 3000,
+      })
     } finally {
-      setUploading(false)
+      setIsUploading(false)
+    }
+  }
+
+  const handleRetry = () => {
+    setError(null)
+    setProgress(0)
+    if (file) {
+      handleSubmit(new Event("submit") as any)
     }
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>ドキュメントアップロード</CardTitle>
+        <CardDescription>
+          PDFファイルをアップロードして、AIに質問しましょう (最大 50MB)
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-          <Label htmlFor="pdf-upload">PDFファイル</Label>
-          <Input id="pdf-upload" type="file" accept="application/pdf" onChange={handleFileChange} disabled={uploading} />
-        </div>
-
-        {file && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <File className="h-4 w-4" />
-            <span className="truncate">{file.name}</span>
-            <span className="ml-auto">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="pdf">PDFファイル</Label>
+            <Input
+              id="pdf"
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              disabled={isUploading}
+            />
           </div>
-        )}
 
-        {uploading && (
-          <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-xs text-center text-muted-foreground">アップロード中... {progress}%</p>
-          </div>
-        )}
-
-        {docId && (
-          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
-            <CheckCircle className="h-4 w-4" />
-            <span>アップロード完了 (ID: {docId})</span>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Button className="w-full" onClick={handleUpload} disabled={!file || uploading}>
-          {uploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              アップロード中
-            </>
-          ) : (
-            <>
-              <Upload className="mr-2 h-4 w-4" />
-              アップロード
-            </>
+          {file && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <File className="h-4 w-4" />
+              <span className="truncate">{file.name}</span>
+              <span className="ml-auto">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+            </div>
           )}
-        </Button>
-      </CardFooter>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>{error}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  className="ml-2"
+                >
+                  <RefreshCw className="mr-2 h-3 w-3" />
+                  再試行
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isUploading && (
+            <div className="space-y-2">
+              <Progress value={progress} />
+              <p className="text-xs text-center text-muted-foreground">アップロード中... {progress}%</p>
+            </div>
+          )}
+
+          {docId && (
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+              <CheckCircle className="h-4 w-4" />
+              <span>アップロード完了 (ID: {docId})</span>
+            </div>
+          )}
+
+          <Button type="submit" disabled={!file || isUploading} className="w-full">
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                アップロード中...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                アップロード
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   )
 }
+

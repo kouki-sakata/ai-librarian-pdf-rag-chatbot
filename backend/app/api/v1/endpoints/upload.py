@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.core.context import tenant_id_context
+from app.services.ingestion import IngestionService
 from app.services.storage import StorageService
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
@@ -9,7 +10,7 @@ router = APIRouter()
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 
-@router.post("/upload", status_code=status.HTTP_200_OK)
+@router.post("/", status_code=status.HTTP_200_OK)
 async def upload_document(file: UploadFile = File(...)) -> Any:
     # Check if tenant_id is set (AuthMiddleware should have set it)
     tenant_id = tenant_id_context.get()
@@ -40,9 +41,17 @@ async def upload_document(file: UploadFile = File(...)) -> Any:
 
     try:
         doc_id = await StorageService.upload_file(file, tenant_id)
-        return {"status": "uploaded", "doc_id": doc_id, "filename": file.filename}
+
+        # Trigger Ingestion
+        # Reconstruct path (assuming PDF as validated)
+        file_path = f"{tenant_id}/docs/{doc_id}.pdf"
+
+        ingestion_service = IngestionService()
+        await ingestion_service.process_document(tenant_id, doc_id, file_path)
+
+        return {"status": "ingested", "doc_id": doc_id, "filename": file.filename}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload file: {str(e)}",
+            detail=f"Failed to process file: {str(e)}",
         )

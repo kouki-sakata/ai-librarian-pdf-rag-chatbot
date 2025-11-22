@@ -13,6 +13,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Skip auth for health check and docs
         if request.url.path in [
             f"{settings.API_V1_STR}/health",
+            f"{settings.API_V1_STR}/health/",
             "/docs",
             "/openapi.json",
             "/redoc",

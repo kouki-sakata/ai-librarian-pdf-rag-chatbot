@@ -25,9 +25,14 @@ if settings.BACKEND_CORS_ORIGINS:
 app.add_middleware(AuthMiddleware)
 
 # Include routers
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
 app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["upload"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
+
+# Instrument FastAPI
+FastAPIInstrumentor.instrument_app(app)
 
 
 @app.get("/")

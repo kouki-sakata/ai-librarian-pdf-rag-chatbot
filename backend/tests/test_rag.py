@@ -24,8 +24,9 @@ def mock_vector_store():
 
 @pytest.fixture
 def mock_history_service():
-    with patch("app.services.history.HistoryService") as mock:
+    with patch("app.services.chat.HistoryService") as mock:
         instance = mock.return_value
+        instance.add_message = AsyncMock()
         yield instance
 
 
