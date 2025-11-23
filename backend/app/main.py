@@ -12,7 +12,10 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Set all CORS enabled origins
+# Add Auth Middleware (added first, so it runs second)
+app.add_middleware(AuthMiddleware)
+
+# Set all CORS enabled origins (added second, so it runs first)
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
@@ -21,9 +24,6 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-# Add Auth Middleware
-app.add_middleware(AuthMiddleware)
 
 # Include routers
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
