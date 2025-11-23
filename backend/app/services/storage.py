@@ -33,6 +33,26 @@ class StorageService:
                 detail=f"Storage upload failed: {response.error.message}",
             )
 
+        # Insert document record into the database
+        try:
+            client.table("documents").insert(
+                {
+                    "id": doc_id,
+                    "tenant_id": tenant_id,
+                    "filename": filename,
+                    "storage_path": path,
+                    "file_size": len(content),
+                    "content_type": file.content_type or "application/pdf",
+                }
+            ).execute()
+        except Exception as e:
+            # If document insertion fails, clean up the uploaded file
+            client.storage.from_(bucket).remove([path])
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create document record: {str(e)}",
+            )
+
         return doc_id
 
     @staticmethod
