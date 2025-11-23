@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -23,6 +25,20 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Allow OPTIONS requests for CORS preflight (handled by CORSMiddleware usually, but good to be safe)
         if request.method == "OPTIONS":
             return await call_next(request)
+
+        # Skip all auth if DISABLE_AUTH is set (development mode only)
+        if settings.DISABLE_AUTH:
+            # Set a mock tenant_id for development
+
+            logging.warning(
+                "⚠️  Authentication is DISABLED - using mock tenant_id. This should NEVER happen in production!"
+            )
+            token_ctx = tenant_id_context.set("dev-tenant")
+            try:
+                response = await call_next(request)
+                return response
+            finally:
+                tenant_id_context.reset(token_ctx)
 
         # Check HTTPS requirement
         # Exclude docs and openapi from HTTPS enforcement if needed (usually handled by load balancer, but good for local/dev)

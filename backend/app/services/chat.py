@@ -30,7 +30,6 @@ class ChatService:
             chunks = await self.retriever.retrieve(tenant_id, query)
 
             # 2. Check if chunks are empty
-            # 2. Check if chunks are empty
             if not chunks:
                 empty_message = "申し訳ございませんが、アップロードされた資料の中に関連する情報が見つかりませんでした。別の質問をお試しください。"
                 yield (
