@@ -35,7 +35,7 @@ repos:
         entry: npm run lint:fix --prefix frontend
         language: system
         files: ^frontend/
-        types: [text]
+        types_or: [javascript, jsx, ts, tsx, json]
         pass_filenames: false
 
       - id: typecheck

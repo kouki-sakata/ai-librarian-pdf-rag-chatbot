@@ -34,6 +34,7 @@ class StreamCitation(BaseModel):
 class StreamMetadataChunk(BaseModel):
     type: Literal["metadata"] = "metadata"
     citations: list[StreamCitation] | None = None
+    results: int | None = None
     empty: bool | None = None
 
 

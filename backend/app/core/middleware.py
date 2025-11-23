@@ -24,8 +24,18 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        if settings.FORCE_HTTPS:
-            proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+        # Check HTTPS requirement
+        # Exclude docs and openapi from HTTPS enforcement if needed (usually handled by load balancer, but good for local/dev)
+        if settings.FORCE_HTTPS and request.url.path not in [
+            "/docs",
+            "/openapi.json",
+            "/redoc",
+            f"{settings.API_V1_STR}/openapi.json",
+        ]:
+            proto_header = request.headers.get("x-forwarded-proto", "")
+            # Handle comma-separated values (e.g. "http, https") - take the first one
+            proto = proto_header.split(",")[0].strip() if proto_header else request.url.scheme
+
             if proto != "https":
                 return JSONResponse(
                     status_code=426,

@@ -25,4 +25,4 @@ test:
 	poetry run pytest
 
 test-watch:
-	poetry run pytest --watch
+	poetry run ptw
