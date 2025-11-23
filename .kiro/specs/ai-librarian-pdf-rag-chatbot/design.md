@@ -95,7 +95,7 @@ sequenceDiagram
 ## Requirements Traceability
 | Requirement | Components | Interfaces/Flows |
 |-------------|------------|------------------|
-| 1.1-1.5 | NextUI, ApiGateway, IngestAPI, DocParser | /upload, 文書取り込み | 
+| 1.1-1.5 | NextUI, ApiGateway, IngestAPI, DocParser | /upload, 文書取り込み |
 | 2.1-2.5 | DocParser, VectorAdapter | VectorIndexPort, 文書取り込み |
 | 3.1-3.5 | NextUI, ApiGateway, ChatAPI, Retriever, LLMAdapter, SessionStore | /chat, 質問応答 |
 | 4.1-4.5 | ApiGateway, Auth, VectorAdapter, SessionStore | auth middleware, tenantスコープ |

@@ -13,9 +13,7 @@ type RawStreamChunk = Partial<StreamMetadataChunk & StreamTokenChunk> & {
   type?: StreamChunk["type"];
 };
 
-const isTokenChunk = (
-  payload: RawStreamChunk | StreamTokenChunk
-): payload is StreamTokenChunk =>
+const isTokenChunk = (payload: RawStreamChunk | StreamTokenChunk): payload is StreamTokenChunk =>
   payload.type === "token" && typeof payload.content === "string";
 
 const isMetadataChunk = (
@@ -34,8 +32,7 @@ const getAuthToken = () => {
     try {
       const parsed = JSON.parse(raw);
       if (parsed?.access_token) return parsed.access_token;
-      if (parsed?.currentSession?.access_token)
-        return parsed.currentSession.access_token;
+      if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
     } catch {
       return raw;
     }
@@ -212,9 +209,7 @@ export function useChat() {
   };
 
   const removeMessage = (originalQuery: string) => {
-    setMessages((prev) =>
-      prev.filter((msg) => msg.originalQuery !== originalQuery)
-    );
+    setMessages((prev) => prev.filter((msg) => msg.originalQuery !== originalQuery));
   };
 
   return {

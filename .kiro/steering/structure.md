@@ -8,15 +8,15 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 
 ### Frontend (Next.js 16)
 
-**Location**: `/frontend/`  
-**Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。  
-**Supporting Modules**: 共通ロジックは `frontend/hooks`（例: `use-chat.ts` が SSE/stream を管理）、ユーティリティは `frontend/lib`、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。  
+**Location**: `/frontend/`
+**Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。
+**Supporting Modules**: 共通ロジックは `frontend/hooks`（例: `use-chat.ts` が SSE/stream を管理）、ユーティリティは `frontend/lib`、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。
 **Path Alias**: `@/*` → `frontend/` ルート配下。
 
 ### Backend (FastAPI)
 
-**Location**: `/backend/`  
-**Purpose**: FastAPI エンドポイントを `app/api/v1/endpoints` に配置し、処理は `app/services` にまとめるシンプルなサービスレイヤ構成。`app/core` に設定・CORS・メトリクスのほか Supabase JWT 検証ミドルウェアと supabase-py クライアント生成を集約（`telemetry.py` が OpenTelemetry + Prometheus exporter を起動）。  
+**Location**: `/backend/`
+**Purpose**: FastAPI エンドポイントを `app/api/v1/endpoints` に配置し、処理は `app/services` にまとめるシンプルなサービスレイヤ構成。`app/core` に設定・CORS・メトリクスのほか Supabase JWT 検証ミドルウェアと supabase-py クライアント生成を集約（`telemetry.py` が OpenTelemetry + Prometheus exporter を起動）。
 **Example**: `app/api/v1/endpoints/upload.py` → `IngestionService` が `StorageService`（supabase-py で Storage バケットへ書き込み）と `VectorStoreService`（psycopg + pgvector でベクトル upsert/search）をオーケストレーション。チャット履歴は `HistoryService` が Supabase テーブル `chat_sessions/chat_messages` を介して管理。
 
 ### Contracts & Shared Schemas
