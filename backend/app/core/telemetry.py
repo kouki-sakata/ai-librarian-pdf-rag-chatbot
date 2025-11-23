@@ -1,15 +1,17 @@
 import logging
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
+from typing import Any
 
-from app.core.config import settings
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from prometheus_client import start_http_server
+
+from app.core.config import settings
 
 # Setup Logger
 logger = logging.getLogger(__name__)
@@ -22,8 +24,10 @@ trace.set_tracer_provider(TracerProvider(resource=resource))
 tracer = trace.get_tracer(__name__)
 
 # Meter Provider with Prometheus Exporter
-# Start Prometheus client
-start_http_server(port=9464, addr="0.0.0.0")
+if settings.METRICS_SERVER_ENABLED:
+    # Start Prometheus client only when enabled to avoid bind errors in restricted envs/tests
+    start_http_server(port=9464, addr="0.0.0.0")
+
 reader = PrometheusMetricReader()
 provider = MeterProvider(resource=resource, metric_readers=[reader])
 metrics.set_meter_provider(provider)
@@ -52,8 +56,8 @@ embedding_token_counter = meter.create_counter(
 @contextmanager
 def measure_latency(
     histogram: metrics.Histogram,
-    attributes: dict = None,
-    threshold_seconds: float = None,
+    attributes: dict[str, Any] | None = None,
+    threshold_seconds: float | None = None,
 ) -> Generator[None, None, None]:
     """
     Context manager to measure execution time and record it to a histogram.

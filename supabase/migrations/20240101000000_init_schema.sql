@@ -94,7 +94,7 @@ using (tenant_id = coalesce(current_setting('app.tenant_id', true), (auth.jwt() 
 -- 6. Storage Objects Policy (Example for Supabase Storage)
 -- Note: This usually goes into storage.objects table which is managed by Supabase Storage API.
 -- We assume a bucket named 'docs' exists.
--- 
+--
 -- create policy "Tenant Isolation for Storage"
 -- on storage.objects
 -- for all

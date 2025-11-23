@@ -5,6 +5,8 @@ __pycache__/
 venv/
 .env
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Node
 node_modules/
@@ -25,3 +27,9 @@ supabase/functions/*/.env
 backend/tests/performance/
 backend/tests/security/
 backend/.coverage
+
+# Gemini
+.gemini
+
+# codex
+.codex

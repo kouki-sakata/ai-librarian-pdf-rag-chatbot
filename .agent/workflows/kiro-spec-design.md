@@ -1,9 +1,10 @@
+---
+description: Create comprehensive technical design for a specification
+auto_execution_mode: 3
+---
 <meta>
 description: Create comprehensive technical design for a specification
-argument-hint: <feature-name> [-y]
-arguments:
-   feature-name: $1
-   -y flag: $2
+argument-hint: <feature-name:$1> [-y:$2]
 </meta>
 
 # Technical Design Generator
@@ -47,7 +48,7 @@ Generate technical design document for feature **$1** based on approved requirem
    - **Complex Integration** → Comprehensive analysis required
 
 2. **Execute Appropriate Discovery Process**:
-   
+
    **For Complex/New Features**:
    - Read and execute `.kiro/settings/rules/design-discovery-full.md`
    - Conduct thorough research using WebSearch/WebFetch:
@@ -55,12 +56,12 @@ Generate technical design document for feature **$1** based on approved requirem
      - External dependency verification (APIs, libraries, versions, compatibility)
      - Official documentation, migration guides, known issues
      - Performance benchmarks and security considerations
-   
+
    **For Extensions**:
    - Read and execute `.kiro/settings/rules/design-discovery-light.md`
    - Focus on integration points, existing patterns, compatibility
    - Use Grep to analyze existing codebase patterns
-   
+
    **For Simple Additions**:
    - Skip formal discovery, quick pattern check only
 
@@ -121,7 +122,7 @@ Generate technical design document for feature **$1** based on approved requirem
 - **Read first**: Load all context before taking action (specs, steering, templates, rules)
 - **Research when uncertain**: Use WebSearch/WebFetch for external dependencies, APIs, and latest best practices
 - **Analyze existing code**: Use Grep to find patterns and integration points in codebase
-- **Write last**: Generate design.md (and research.md updates) only after all research and analysis complete
+- **Write last**: Generate design.md only after all research and analysis complete
 
 ## Output Description
 
@@ -131,9 +132,8 @@ Provide brief summary in the language specified in spec.json:
 
 1. **Status**: Confirm design document generated at `.kiro/specs/$1/design.md`
 2. **Discovery Type**: Which discovery process was executed (full/light/minimal)
-3. **Key Findings**: 2-3 critical insights from `research.md` that shaped the design
+3. **Key Findings**: 2-3 critical insights from discovery that shaped the design
 4. **Next Action**: Approval workflow guidance (see Safety & Fallback)
-5. **Research Log**: Confirm `research.md` updated with latest decisions
 
 **Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
 
@@ -146,12 +146,12 @@ Provide brief summary in the language specified in spec.json:
 **Requirements Not Approved**:
 - **Stop Execution**: Cannot proceed without approved requirements
 - **User Message**: "Requirements not yet approved. Approval required before design generation."
-- **Suggested Action**: "Run `/prompts:kiro-spec-design $1 -y` to auto-approve requirements and proceed"
+- **Suggested Action**: "Run `/kiro-spec-design $1 -y` to auto-approve requirements and proceed"
 
 **Missing Requirements**:
 - **Stop Execution**: Requirements document must exist
 - **User Message**: "No requirements.md found at `.kiro/specs/$1/requirements.md`"
-- **Suggested Action**: "Run `/prompts:kiro-spec-requirements $1` to generate requirements first"
+- **Suggested Action**: "Run `/kiro-spec-requirements $1` to generate requirements first"
 
 **Template Missing**:
 - **User Message**: "Template file missing at `.kiro/settings/templates/specs/design.md`"
@@ -172,11 +172,11 @@ Provide brief summary in the language specified in spec.json:
 
 **If Design Approved**:
 - Review generated design at `.kiro/specs/$1/design.md`
-- **Optional**: Run `/prompts:kiro-validate-design $1` for interactive quality review
-- Then `/prompts:kiro-spec-tasks $1 -y` to generate implementation tasks
+- **Optional**: Run `/kiro-validate-design $1` for interactive quality review
+- Then `/kiro-spec-tasks $1 -y` to generate implementation tasks
 
 **If Modifications Needed**:
-- Provide feedback and re-run `/prompts:kiro-spec-design $1`
+- Provide feedback and re-run `/kiro-spec-design $1`
 - Existing design used as reference (merge mode)
 
 **Note**: Design approval is mandatory before proceeding to task generation.

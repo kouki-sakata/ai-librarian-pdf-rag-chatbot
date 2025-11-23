@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import { AlertCircle, Loader2, RefreshCw, Send } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ChatMessage } from "./chat-message";
-import { Send, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { useChat } from "@/hooks/use-chat";
-import { getChatErrorMessage } from "@/lib/error-messages";
 import { Message } from "@/types";
+import { ChatMessage } from "./chat-message";
 
 export function ChatInterface() {
   const {
@@ -24,23 +23,25 @@ export function ChatInterface() {
     addMessage,
     removeMessage,
   } = useChat();
-  
+
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [messages]);
+  }, []);
 
   useEffect(() => {
     initSession();
-  }, []);
+  }, [initSession]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,11 +55,12 @@ export function ChatInterface() {
 
     addMessage(userMessage);
     setInput("");
-    
+
     await sendMessage(userMessage.content);
   };
 
-  const handleRetryMessage = (originalQuery: string) => {
+  const handleRetryMessage = (originalQuery?: string) => {
+    if (!originalQuery) return;
     removeMessage(originalQuery);
     sendMessage(originalQuery);
   };
@@ -101,7 +103,7 @@ export function ChatInterface() {
               ドキュメントについて何でも聞いてください!
             </div>
           ) : (
-            messages.map((msg) => (
+            messages.map((msg) =>
               msg.role === "error" ? (
                 <div key={msg.id} className="mb-4">
                   <Alert variant="destructive">
@@ -113,7 +115,7 @@ export function ChatInterface() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRetryMessage(msg.originalQuery!)}
+                          onClick={() => handleRetryMessage(msg.originalQuery)}
                           className="ml-2"
                         >
                           <RefreshCw className="mr-2 h-3 w-3" />
@@ -124,9 +126,15 @@ export function ChatInterface() {
                   </Alert>
                 </div>
               ) : (
-                <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role}
+                  content={msg.content}
+                  citations={msg.citations}
+                  isEmptyResult={msg.isEmptyResult}
+                />
               )
-            ))
+            )
           )}
         </ScrollArea>
       </CardContent>
@@ -146,4 +154,3 @@ export function ChatInterface() {
     </Card>
   );
 }
-

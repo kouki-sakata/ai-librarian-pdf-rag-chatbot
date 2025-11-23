@@ -1,8 +1,9 @@
+---
+description: Create custom steering documents for specialized project contexts
+auto_execution_mode: 3
+---
 <meta>
 description: Create custom steering documents for specialized project contexts
-argument-hint: <what-to-create-custom-steering>
-arguments:
-   what-to-create-custom-steering: $ARGUMENTS
 </meta>
 
 # Kiro Custom Steering Creation
@@ -104,13 +105,13 @@ Review and customize as needed.
 ## Examples
 
 ### Success: API Standards
-**Input**: "Create API standards steering"  
-**Action**: Load template, analyze src/api/, extract patterns  
+**Input**: "Create API standards steering"
+**Action**: Load template, analyze src/api/, extract patterns
 **Output**: api-standards.md with project-specific REST conventions
 
 ### Success: Testing Strategy
-**Input**: "Document our testing approach"  
-**Action**: Load template, analyze test files, extract patterns  
+**Input**: "Document our testing approach"
+**Action**: Load template, analyze test files, extract patterns
 **Output**: testing.md with test organization and mocking strategies
 
 ## Safety & Fallback
@@ -125,6 +126,3 @@ Review and customize as needed.
 - Follow same granularity principles as core steering
 - All steering files loaded as project memory
 - Custom files equally important as core files
-- Avoid documenting agent-specific tooling directories (e.g. `.cursor/`, `.gemini/`, `.claude/`)
-- Light references to `.kiro/specs/` and `.kiro/steering/` are acceptable; avoid other `.kiro/` directories
-

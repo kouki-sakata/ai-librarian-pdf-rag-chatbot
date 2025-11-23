@@ -1,15 +1,13 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from app.services.vector_store import VectorStoreService
 
 
 class RetrieverService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.vector_store = VectorStoreService()
 
-    async def retrieve(
-        self, tenant_id: str, query: str, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    async def retrieve(self, tenant_id: str, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """
         Retrieves relevant chunks for a query.
         """
@@ -19,6 +17,12 @@ class RetrieverService:
         query_embedding = embeddings[0]
 
         # 2. Search vector store
-        results = self.vector_store.search(tenant_id, query_embedding, top_k)
+        results = await self.vector_store.search(tenant_id, query_embedding, top_k)
+
+        for item in results:
+            meta = item.get("metadata") or {}
+            if item.get("doc_id") and "doc_id" not in meta:
+                meta["doc_id"] = item["doc_id"]
+            item["metadata"] = meta
 
         return results
