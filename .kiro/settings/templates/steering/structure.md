@@ -7,11 +7,7 @@
 ## Directory Patterns
 
 ### [Pattern Name]
-**Location**: `/path/`
-**Purpose**: [What belongs here]
-**Example**: [Brief example]
 
-### [Pattern Name]
 **Location**: `/path/`
 **Purpose**: [What belongs here]
 **Example**: [Brief example]
@@ -26,11 +22,12 @@
 
 ```typescript
 // Example import patterns
-import { Something } from '@/path'  // Absolute
-import { Local } from './local'     // Relative
+import { Something } from "@/path"; // Absolute
+import { Local } from "./local"; // Relative
 ```
 
 **Path Aliases**:
+
 - `@/`: [Maps to]
 
 ## Code Organization Principles
@@ -38,4 +35,5 @@ import { Local } from './local'     // Relative
 [Key architectural patterns and dependency rules]
 
 ---
+
 _Document patterns, not file trees. New files following patterns shouldn't require updates_
