@@ -62,8 +62,15 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 
 ## Coding Style & Naming Conventions
 
-- TypeScript stays in strict mode—do not use `any` or `unknown`; components use PascalCase filenames, hooks use camelCase.
-- Biome handles linting and formatting
+- **General**: All code must pass `pre-commit` hooks (formatting, linting, type checking) before committing.
+- **Backend (Python)**:
+  - Use Python 3.12+ with strict type hints (`mypy`).
+  - Follow `snake_case` for functions/variables, `PascalCase` for classes.
+  - Use `ruff` for linting and formatting.
+- **Frontend (TypeScript)**:
+  - Use TypeScript in strict mode—no `any` or `unknown`.
+  - Use `PascalCase` for components, `camelCase` for hooks/functions/variables.
+  - Use `biome` for linting and formatting.
 
 ## Commit & Pull Request Guidelines
 
