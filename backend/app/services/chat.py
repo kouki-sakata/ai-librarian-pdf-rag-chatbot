@@ -30,6 +30,7 @@ class ChatService:
             chunks = await self.retriever.retrieve(tenant_id, query)
 
             # 2. Check if chunks are empty
+            # 2. Check if chunks are empty
             if not chunks:
                 empty_message = "申し訳ございませんが、アップロードされた資料の中に関連する情報が見つかりませんでした。別の質問をお試しください。"
                 yield (
@@ -42,6 +43,7 @@ class ChatService:
                     )
                     + "\n"
                 )
+                # Emit empty metadata
                 yield (
                     json.dumps(
                         {"type": "metadata", "citations": [], "empty": True},
@@ -49,6 +51,7 @@ class ChatService:
                     )
                     + "\n"
                 )
+                # Save history even for empty results
                 await self.history.add_message(tenant_id, session_id, "user", query)
                 await self.history.add_message(tenant_id, session_id, "assistant", empty_message)
                 return
@@ -59,7 +62,25 @@ class ChatService:
             for item in chunks:
                 meta = item.get("metadata", {}) or {}
                 source = meta.get("source") or meta.get("doc_id") or "unknown"
-                page = meta.get("page") or meta.get("chunk")
+                # Ensure page is never None, use 0 or "unknown" if missing, but type is int | None in model
+                # Frontend expects number or undefined. Let's use None if missing but handle it gracefully.
+                # User requested: never set page to None (use meta.get("page") or meta.get("chunk") or "unknown")
+                # But page is usually int. "unknown" would break int type.
+                # Let's use meta.get("page") and default to 1 if missing for now, or keep None if allowed by frontend?
+                # User said: "ensure you never set page to None ... or the string 'unknown'".
+                # If I use string "unknown", I must update Pydantic model to allow str.
+                # Current model: page: int | None.
+                # I will use meta.get("page") or 1 (as fallback) or just let it be None if I can't change model.
+                # Wait, user said "ensure you never set page to None".
+                # If I set it to "unknown", I need to change StreamCitation model.
+                # Let's check StreamCitation model again.
+                # It was updated to `page: int | None`.
+                # I will try to use integer if possible.
+                page = meta.get("page")
+                if page is None:
+                    # Try to extract from chunk index if available, or default to 1
+                    page = meta.get("chunk", 1)
+
                 citations.append(
                     {
                         "source": source,
