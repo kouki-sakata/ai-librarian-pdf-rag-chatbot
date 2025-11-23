@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -27,7 +29,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Skip all auth if DISABLE_AUTH is set (development mode only)
         if settings.DISABLE_AUTH:
             # Set a mock tenant_id for development
-            import logging
 
             logging.warning(
                 "⚠️  Authentication is DISABLED - using mock tenant_id. This should NEVER happen in production!"
