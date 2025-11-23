@@ -1,19 +1,19 @@
-from app.core.config import settings
-from app.core.context import tenant_id_context
-from app.core.security import verify_jwt
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
+from app.core.config import settings
+from app.core.context import tenant_id_context
+from app.core.security import verify_jwt
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Skip auth for health check and docs
         if request.url.path in [
             f"{settings.API_V1_STR}/health",
             f"{settings.API_V1_STR}/health/",
+            f"{settings.API_V1_STR}/openapi.json",
             "/docs",
             "/openapi.json",
             "/redoc",
@@ -23,6 +23,24 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Allow OPTIONS requests for CORS preflight (handled by CORSMiddleware usually, but good to be safe)
         if request.method == "OPTIONS":
             return await call_next(request)
+
+        # Check HTTPS requirement
+        # Exclude docs and openapi from HTTPS enforcement if needed (usually handled by load balancer, but good for local/dev)
+        if settings.FORCE_HTTPS and request.url.path not in [
+            "/docs",
+            "/openapi.json",
+            "/redoc",
+            f"{settings.API_V1_STR}/openapi.json",
+        ]:
+            proto_header = request.headers.get("x-forwarded-proto", "")
+            # Handle comma-separated values (e.g. "http, https") - take the first one
+            proto = proto_header.split(",")[0].strip() if proto_header else request.url.scheme
+
+            if proto != "https":
+                return JSONResponse(
+                    status_code=426,
+                    content={"detail": "HTTPS is required for this endpoint"},
+                )
 
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):

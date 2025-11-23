@@ -1,8 +1,9 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.v1.endpoints import chat, health, upload
 from app.core.config import settings
 from app.core.middleware import AuthMiddleware
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,7 +23,7 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 # Add Auth Middleware
-# app.add_middleware(AuthMiddleware)
+app.add_middleware(AuthMiddleware)
 
 # Include routers
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -36,5 +37,5 @@ FastAPIInstrumentor.instrument_app(app)
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"message": "Welcome to AI Librarian RAG API"}

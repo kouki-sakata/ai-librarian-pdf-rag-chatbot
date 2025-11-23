@@ -1,9 +1,10 @@
+---
+description: Execute spec tasks using TDD methodology
+auto_execution_mode: 3
+---
 <meta>
 description: Execute spec tasks using TDD methodology
-argument-hint: <feature-name> [task-numbers]
-arguments:
-   feature-name: $1
-   task-numbers: $2
+argument-hint: <feature-name:$1> [task-numbers:$2]
 </meta>
 
 # Implementation Task Executor
@@ -94,7 +95,7 @@ Provide brief summary in the language specified in spec.json:
 
 **Tasks Not Approved or Missing Spec Files**:
 - **Stop Execution**: All spec files must exist and tasks must be approved
-- **Suggested Action**: "Complete previous phases: `/prompts:kiro-spec-requirements`, `/prompts:kiro-spec-design`, `/prompts:kiro-spec-tasks`"
+- **Suggested Action**: "Complete previous phases: `/kiro-spec-requirements`, `/kiro-spec-design`, `/kiro-spec-tasks`"
 
 **Test Failures**:
 - **Stop Implementation**: Fix failing tests before continuing
@@ -103,9 +104,8 @@ Provide brief summary in the language specified in spec.json:
 ### Task Execution
 
 **Execute specific task(s)**:
-- `/prompts:kiro-spec-impl $1 1.1` - Single task
-- `/prompts:kiro-spec-impl $1 1,2,3` - Multiple tasks
+- `/kiro-spec-impl $1 1.1` - Single task
+- `/kiro-spec-impl $1 1,2,3` - Multiple tasks
 
 **Execute all pending**:
-- `/prompts:kiro-spec-impl $1` - All unchecked tasks
-
+- `/kiro-spec-impl $1` - All unchecked tasks

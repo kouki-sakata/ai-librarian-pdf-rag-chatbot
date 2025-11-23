@@ -1,12 +1,11 @@
 from io import BytesIO
-from typing import List
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 
 class PdfParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -28,7 +27,7 @@ class PdfParser:
         except Exception as e:
             raise ValueError(f"Failed to parse PDF: {str(e)}")
 
-    def split_text(self, text: str) -> List[str]:
+    def split_text(self, text: str) -> list[str]:
         """
         Splits text into chunks.
         """

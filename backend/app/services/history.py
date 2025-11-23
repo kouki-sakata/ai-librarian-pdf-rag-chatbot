@@ -1,22 +1,19 @@
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, cast
 
-from app.core.config import settings
+from app.core.supabase_client import get_supabase_client
 
-# We need a supabase client. Since we haven't initialized a global one yet properly,
-# we'll assume a simple client wrapper or use the library directly if configured.
-# For now, we'll mock/stub it or use a placeholder if not fully integrated.
-# But to make the test pass (which mocks 'app.services.history.supabase'), we need to import it.
+if TYPE_CHECKING:
+    from supabase import Client
 
-# In a real app, we'd have a singleton Supabase client.
-# Let's define a placeholder for now that the test mocks.
-try:
-    from supabase import Client, create_client
+# Module-level client placeholder to ease patching in tests
+supabase: "Client | None" = None
 
-    supabase: Client = create_client(
-        settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY
-    )
-except ImportError:
-    supabase = None  # For environments without supabase-py installed or configured
+
+def _get_client() -> "Client":
+    global supabase
+    if supabase is None:
+        supabase = get_supabase_client()
+    return supabase
 
 
 class HistoryService:
@@ -24,18 +21,17 @@ class HistoryService:
         """
         Creates a new chat session.
         """
-        response = (
-            supabase.table("chat_sessions").insert({"tenant_id": tenant_id}).execute()
-        )
-        return response.data[0]["id"]
+        client = _get_client()
+        response = client.table("chat_sessions").insert({"tenant_id": tenant_id}).execute()
+        data = cast(list[dict[str, Any]], response.data)
+        return str(data[0]["id"])
 
-    async def add_message(
-        self, tenant_id: str, session_id: str, role: str, content: str
-    ):
+    async def add_message(self, tenant_id: str, session_id: str, role: str, content: str) -> None:
         """
         Adds a message to the session history.
         """
-        supabase.table("chat_messages").insert(
+        client = _get_client()
+        client.table("chat_messages").insert(
             {
                 "tenant_id": tenant_id,
                 "session_id": session_id,
@@ -44,18 +40,17 @@ class HistoryService:
             }
         ).execute()
 
-    async def get_history(
-        self, tenant_id: str, session_id: str
-    ) -> List[Dict[str, Any]]:
+    async def get_history(self, tenant_id: str, session_id: str) -> list[dict[str, Any]]:
         """
         Retrieves chat history for a session.
         """
+        client = _get_client()
         response = (
-            supabase.table("chat_messages")
+            client.table("chat_messages")
             .select("*")
             .eq("tenant_id", tenant_id)
             .eq("session_id", session_id)
             .order("created_at")
             .execute()
         )
-        return response.data
+        return cast(list[dict[str, Any]], response.data)

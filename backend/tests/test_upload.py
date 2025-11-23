@@ -1,8 +1,10 @@
+from typing import Any
 from unittest.mock import patch
 
 import pytest
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 
@@ -19,7 +21,7 @@ def mock_storage_upload():
         yield mock
 
 
-def test_upload_pdf_success(client: TestClient, auth_headers: dict[str, str]):
+def test_upload_pdf_success(client: TestClient, auth_headers: dict[str, str]) -> None:
     from unittest.mock import AsyncMock, patch
 
     from app.core.config import settings
@@ -42,7 +44,7 @@ def test_upload_pdf_success(client: TestClient, auth_headers: dict[str, str]):
             assert data["status"] == "ingested"
 
 
-def test_upload_non_pdf(mock_verify_jwt):
+def test_upload_non_pdf(mock_verify_jwt: Any) -> None:
     mock_verify_jwt.return_value = {"sub": "user123", "tenant_id": "tenant123"}
 
     files = {"file": ("test.txt", b"text content", "text/plain")}
@@ -54,7 +56,7 @@ def test_upload_non_pdf(mock_verify_jwt):
     assert "Only PDF files are allowed" in response.json()["detail"]
 
 
-def test_upload_too_large(mock_verify_jwt):
+def test_upload_too_large(mock_verify_jwt: Any) -> None:
     mock_verify_jwt.return_value = {"sub": "user123", "tenant_id": "tenant123"}
 
     # Create a dummy large file content (simulated by mocking or just checking size logic if possible)
@@ -69,7 +71,7 @@ def test_upload_too_large(mock_verify_jwt):
     pass
 
 
-def test_upload_unauthorized():
+def test_upload_unauthorized() -> None:
     files = {"file": ("test.pdf", b"%PDF-1.4 content", "application/pdf")}
     response = client.post("/api/v1/upload", files=files)
     assert response.status_code == 401

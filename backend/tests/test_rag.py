@@ -1,6 +1,8 @@
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
 from app.services.chat import ChatService
 from app.services.retriever import RetrieverService
 
@@ -17,7 +19,7 @@ MOCK_ANSWER = "The summary is..."
 def mock_vector_store():
     with patch("app.services.retriever.VectorStoreService") as mock:
         instance = mock.return_value
-        instance.search.return_value = MOCK_CHUNKS
+        instance.search = AsyncMock(return_value=MOCK_CHUNKS)
         instance.generate_embeddings.return_value = [[0.1, 0.2]]
         yield instance
 
@@ -60,9 +62,7 @@ async def test_retrieve_relevant_chunks(mock_vector_store):
 
 
 @pytest.mark.asyncio
-async def test_generate_answer_flow(
-    mock_vector_store, mock_openai, mock_history_service
-):
+async def test_generate_answer_flow(mock_vector_store, mock_openai, mock_history_service):
     # Setup
     service = ChatService()
 
@@ -74,8 +74,11 @@ async def test_generate_answer_flow(
     async for chunk in response_generator:
         chunks.append(chunk)
 
-    full_response = "".join(chunks)
-    assert "The summary is..." in full_response
+    # Extract streamed token contents and ensure they combine to expected text
+    token_text = "".join(
+        json.loads(item)["content"] for item in chunks if json.loads(item).get("type") == "token"
+    )
+    assert token_text == "The summary is..."
 
     # Verify interactions
     mock_vector_store.search.assert_called()  # Retrieval happened
@@ -84,10 +87,6 @@ async def test_generate_answer_flow(
     # Verify history saving
     assert mock_history_service.add_message.call_count == 2
     # Check user message saved
-    mock_history_service.add_message.assert_any_call(
-        "tenant1", "session1", "user", MOCK_QUERY
-    )
+    mock_history_service.add_message.assert_any_call("tenant1", "session1", "user", MOCK_QUERY)
     # Check assistant message saved (full response)
-    mock_history_service.add_message.assert_any_call(
-        "tenant1", "session1", "assistant", full_response
-    )
+    mock_history_service.add_message.assert_any_call("tenant1", "session1", "assistant", token_text)

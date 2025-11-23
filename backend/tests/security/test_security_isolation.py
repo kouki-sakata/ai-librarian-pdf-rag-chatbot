@@ -1,10 +1,11 @@
 import os
 import time
 
-from app.core.config import settings
-from app.main import app
 from fastapi.testclient import TestClient
 from jose import jwt
+
+from app.core.config import settings
+from app.main import app
 
 # Ensure we use the test secret
 os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
@@ -40,9 +41,7 @@ def test_auth_middleware_rejects_invalid_token():
 
 def test_auth_middleware_rejects_expired_token():
     token = generate_test_token("tenant1", exp_delta=-3600)  # Expired 1 hour ago
-    response = client.get(
-        f"{settings.API_V1_STR}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"{settings.API_V1_STR}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
     assert "Token has expired" in response.json()["detail"]
 
@@ -56,9 +55,7 @@ def test_auth_middleware_rejects_missing_tenant_id():
         "role": "authenticated",
     }
     token = jwt.encode(payload, "test-secret", algorithm="HS256")
-    response = client.get(
-        f"{settings.API_V1_STR}/", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get(f"{settings.API_V1_STR}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
     assert "Missing tenant_id" in response.json()["detail"]
 

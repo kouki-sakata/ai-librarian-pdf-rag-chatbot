@@ -1,10 +1,12 @@
+import json
 import os
 import time
 
-from app.core.config import settings
-from app.main import app
 from fastapi.testclient import TestClient
 from jose import jwt
+
+from app.core.config import settings
+from app.main import app
 
 # Ensure we use the test secret
 os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
@@ -47,6 +49,7 @@ def test_e2e_upload_and_chat_flow():
         patch("app.services.ingestion.StorageService") as MockStorageIngestion,
         patch("app.services.ingestion.PdfParser") as MockPdfParser,
         patch("app.services.ingestion.VectorStoreService") as MockVectorStore,
+        patch("app.services.retriever.VectorStoreService") as MockRetrieverVector,
         patch("app.services.chat.RetrieverService") as MockRetriever,
         patch("app.services.chat.AsyncOpenAI") as MockOpenAI,
         patch("app.services.chat.HistoryService") as MockHistory,
@@ -58,9 +61,7 @@ def test_e2e_upload_and_chat_flow():
 
         # download_file is called in ingestion.py
         mock_storage_ingestion_instance = MockStorageIngestion.return_value
-        mock_storage_ingestion_instance.download_file = AsyncMock(
-            return_value=pdf_content
-        )
+        mock_storage_ingestion_instance.download_file = AsyncMock(return_value=pdf_content)
 
         # PdfParser
         mock_parser = MockPdfParser.return_value
@@ -71,6 +72,13 @@ def test_e2e_upload_and_chat_flow():
         mock_vector_store = MockVectorStore.return_value
         mock_vector_store.generate_embeddings.return_value = [[0.1, 0.2]]
         mock_vector_store.upsert_vectors = AsyncMock()
+
+        # Retriever vector store
+        mock_retriever_vector = MockRetrieverVector.return_value
+        mock_retriever_vector.generate_embeddings.return_value = [[0.1, 0.2]]
+        mock_retriever_vector.search = AsyncMock(
+            return_value=[{"content": "Hello World", "metadata": {"page": 1}}]
+        )
 
         # Retriever
         mock_retriever = MockRetriever.return_value
@@ -116,9 +124,7 @@ def test_e2e_upload_and_chat_flow():
         mock_history.add_message = AsyncMock()
 
         # 1. Upload
-        response = client.post(
-            f"{settings.API_V1_STR}/upload/", files=files, headers=headers
-        )
+        response = client.post(f"{settings.API_V1_STR}/upload/", files=files, headers=headers)
         assert response.status_code == 200, response.text
         data = response.json()
         assert data["filename"] == "e2e_test.pdf"
@@ -132,6 +138,9 @@ def test_e2e_upload_and_chat_flow():
             headers=headers,
         )
         assert response.status_code == 200
-        # Consume stream
-        content = response.text
-        assert "Hello Human" in content
+        lines = [line for line in response.text.split("\n") if line.strip()]
+        token_text = "".join(
+            json.loads(line)["content"] for line in lines if json.loads(line).get("type") == "token"
+        )
+        assert token_text == "Hello Human"
+        assert any(json.loads(line).get("type") == "metadata" for line in lines)

@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import sys
+from typing import Any
 
 
 class JsonFormatter(logging.Formatter):
@@ -9,7 +10,7 @@ class JsonFormatter(logging.Formatter):
     Formatter that outputs JSON strings after masking sensitive data.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.sensitive_patterns = [
             (r"(sk-[a-zA-Z0-9]{20,})", "***MASKED_API_KEY***"),
@@ -23,7 +24,7 @@ class JsonFormatter(logging.Formatter):
         return message
 
     def format(self, record: logging.LogRecord) -> str:
-        log_record = {
+        log_record: dict[str, Any] = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
             "message": record.getMessage(),
@@ -37,7 +38,7 @@ class JsonFormatter(logging.Formatter):
             log_record["exception"] = self.formatException(record.exc_info)
 
         # Mask sensitive data in message
-        log_record["message"] = self.mask_sensitive_data(log_record["message"])
+        log_record["message"] = self.mask_sensitive_data(str(log_record["message"]))
 
         return json.dumps(log_record)
 
