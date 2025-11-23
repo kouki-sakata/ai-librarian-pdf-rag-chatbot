@@ -114,7 +114,7 @@ class VectorStoreService:
                     SELECT doc_id,
                            content,
                            metadata::jsonb,
-                           1 - (embedding <=> %s) AS similarity
+                           1 - (embedding <=> %s::vector) AS similarity
                     FROM vectors
                     WHERE tenant_id = %s
                     ORDER BY similarity DESC

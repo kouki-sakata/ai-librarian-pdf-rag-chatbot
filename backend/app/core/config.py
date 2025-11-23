@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     # Security
     FORCE_HTTPS: bool = False  # Enforce HTTPS when behind a proxy (checks X-Forwarded-Proto)
+    DISABLE_AUTH: bool = False  # Disable authentication (for development only, NEVER in production)
 
     # CORS Settings
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
