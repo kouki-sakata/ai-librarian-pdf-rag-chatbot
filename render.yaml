@@ -21,4 +21,4 @@ services:
         sync: false
       - key: DISABLE_AUTH
         value: "false"
-    healthCheckPath: /api/v1/health
+    healthCheckPath: /api/v1/health/
