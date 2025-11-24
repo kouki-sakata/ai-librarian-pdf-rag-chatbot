@@ -12,25 +12,25 @@ help:
 	@echo "  make test-watch - Run pytest in watch mode"
 
 dev:
-	poetry run uvicorn app.main:app --reload
+	uv run uvicorn app.main:app --reload
 
 start:
-	poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
+	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 lint:
-	poetry run ruff check .
+	uv run ruff check .
 
 lint-fix:
-	poetry run ruff check . --fix
+	uv run ruff check --fix .
 
 format:
-	poetry run ruff format .
+	uv run ruff format .
 
 typecheck:
-	poetry run mypy .
+	uv run mypy app
 
 test:
-	poetry run pytest
+	uv run pytest
 
 test-watch:
-	poetry run ptw
+	uv run pytest-watch
