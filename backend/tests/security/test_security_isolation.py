@@ -10,6 +10,8 @@ from app.main import app
 # Ensure we use the test secret
 os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
 settings.SUPABASE_JWT_SECRET = "test-secret"
+# Force auth to be enabled for security tests, regardless of env file
+settings.DISABLE_AUTH = False
 
 client = TestClient(app)
 

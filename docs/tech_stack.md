@@ -7,7 +7,7 @@
 - **Python 3.12+** – アプリケーションロジック全体
 - **FastAPI** – 高速な非同期 API サーバ
 - **Uvicorn** – ASGI サーバ（開発モード `--reload`、本番モード `--host 0.0.0.0`）
-- **Poetry** – 依存管理・仮想環境
+- **uv** – 高速な依存管理・パッケージマネージャー
 - **OpenAI SDK (AsyncOpenAI)** – LLM（`gpt-4o-mini`）呼び出し
 - **pgvector** (PostgreSQL 拡張) – ベクトル検索用インデックス
 - **psycopg (async)** – PostgreSQL への非同期クエリ
