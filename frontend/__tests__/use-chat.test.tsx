@@ -9,6 +9,16 @@ vi.mock("sonner", () => ({
   },
 }));
 
+// Mock Supabase client
+const mockGetSession = vi.fn();
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({
+    auth: {
+      getSession: mockGetSession,
+    },
+  }),
+}));
+
 const encoder = new TextEncoder();
 
 const buildStreamResponse = (lines: string[]) => {
@@ -26,6 +36,12 @@ const buildStreamResponse = (lines: string[]) => {
 describe("useChat hook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Reset Supabase mock to default null state
+    mockGetSession.mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -122,5 +138,152 @@ describe("useChat hook", () => {
     expect(lastMessage?.canRetry).toBe(true);
     expect(lastMessage?.originalQuery).toBe("失敗テスト");
     expect(lastMessage?.content.length).toBeGreaterThan(0);
+  });
+
+  it("retrieves auth token from Supabase client instead of localStorage", async () => {
+    const fetchMock = vi.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    // Mock Supabase session with token
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: {
+          access_token: "supabase-test-token-123",
+        },
+      },
+      error: null,
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ session_id: "session-auth-test" }), {
+        status: 200,
+      })
+    );
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.initSession();
+    });
+
+    // Verify that the fetch call includes the Supabase token
+    const sessionInitCall = fetchMock.mock.calls[0];
+    expect(sessionInitCall[1]?.headers).toEqual({
+      Authorization: "Bearer supabase-test-token-123",
+    });
+
+    expect(result.current.sessionId).toBe("session-auth-test");
+  });
+
+  it("aborts fetch request after 30 seconds timeout", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: "test-token" } },
+      error: null,
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ session_id: "session-timeout" }), {
+        status: 200,
+      })
+    );
+
+    // Mock fetch to simulate abort after delay
+    let _capturedController: AbortController | null = null;
+    fetchMock.mockImplementationOnce((_url, options) => {
+      const requestOptions = options as RequestInit | undefined;
+      const signalWithController = requestOptions?.signal as
+        | (AbortSignal & {
+            _controller?: AbortController;
+          })
+        | undefined;
+
+      _capturedController = signalWithController?._controller ?? null;
+
+      return new Promise((_resolve, reject) => {
+        const signal = requestOptions?.signal;
+        if (signal) {
+          signal.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        }
+        // Never resolve - will be aborted by timeout
+      });
+    });
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.initSession();
+    });
+
+    // Start sending message
+    const sendPromise = act(async () => {
+      await result.current.sendMessage("timeout test");
+    });
+
+    // Fast-forward time by 30 seconds to trigger timeout
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30000);
+    });
+
+    await sendPromise;
+
+    // Verify error message was added
+    const lastMessage = result.current.messages.at(-1);
+    expect(lastMessage?.role).toBe("error");
+    expect(lastMessage?.content).toContain("タイムアウト");
+
+    vi.useRealTimers();
+  });
+
+  it("uses NEXT_PUBLIC_API_URL environment variable for API calls", async () => {
+    const fetchMock = vi.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    // Set environment variable
+    const originalEnv = process.env.NEXT_PUBLIC_API_URL;
+    process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
+
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: "test-token" } },
+      error: null,
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ session_id: "session-env-test" }), {
+        status: 200,
+      })
+    );
+    fetchMock.mockResolvedValueOnce(
+      buildStreamResponse([
+        '{"type":"token","content":"test"}',
+        '{"type":"metadata","citations":[]}',
+      ])
+    );
+
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.initSession();
+    });
+
+    await act(async () => {
+      await result.current.sendMessage("env test");
+    });
+
+    // Verify API calls use the environment variable
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.example.com/api/v1/chat/sessions");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.example.com/api/v1/chat");
+
+    // Restore original environment variable
+    if (originalEnv) {
+      process.env.NEXT_PUBLIC_API_URL = originalEnv;
+    } else {
+      delete process.env.NEXT_PUBLIC_API_URL;
+    }
   });
 });

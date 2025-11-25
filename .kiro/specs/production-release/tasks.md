@@ -2,55 +2,55 @@
 
 ## Phase 1: Production Deployment & Authentication
 
-- [ ] 1. Supabase Auth クライアント統合
-- [ ] 1.1 (P) ブラウザクライアント作成
+- [x] 1. Supabase Auth クライアント統合
+- [x] 1.1 (P) ブラウザクライアント作成
 
   - `lib/supabase/client.ts` で `createBrowserClient()` を実装
   - 環境変数 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` を使用
   - _Requirements: 2.1, 2.7_
 
-- [ ] 1.2 (P) サーバークライアント作成
+- [x] 1.2 (P) サーバークライアント作成
 
   - `lib/supabase/server.ts` で `createServerClient()` を実装
   - `@supabase/ssr` で Cookie 管理を統合
   - _Requirements: 2.1, 2.7_
 
-- [ ] 2. ログイン機能実装
-- [ ] 2.1 ミドルウェアでルート保護
+- [x] 2. ログイン機能実装
+- [x] 2.1 ミドルウェアでルート保護
 
   - `middleware.ts` で未認証ユーザーを `/login` にリダイレクト
   - 公開ルート（`/login`, `/auth/callback`）を除外
   - _Requirements: 2.1_
 
-- [ ] 2.2 ログインページ作成
+- [x] 2.2 ログインページ作成
 
   - `/app/login/page.tsx` で Email/Password フォーム実装
   - 「ゲストログイン」ボタン（`signInAnonymously()`）を追加
   - エラー時に Toast 表示
   - _Requirements: 2.2, 2.3_
 
-- [ ] 2.3 認証コールバック処理
+- [x] 2.3 認証コールバック処理
 
   - `/app/auth/callback/route.ts` でメール認証リンクのコールバック実装
   - コード交換後に `/` へリダイレクト
   - _Requirements: 2.6_
 
-- [ ] 3. チャットフックの認証対応
-- [ ] 3.1 (P) Token 取得ロジック変更
+- [x] 3. チャットフックの認証対応
+- [x] 3.1 (P) Token 取得ロジック変更
 
   - `hooks/use-chat.ts` で `supabase.auth.getSession()` から token 取得
   - localStorage ロジックを削除
   - _Requirements: 2.7_
 
-- [ ] 3.2 (P) タイムアウト処理追加
+- [x] 3.2 (P) タイムアウト処理追加
 
   - `AbortController` で 30 秒タイムアウトを実装
   - タイムアウト時に Toast エラー表示
   - `NEXT_PUBLIC_API_URL` 環境変数を使用
   - _Requirements: 3.5_
 
-- [ ] 4. Upload フォームのタイムアウト対応
-- [ ] 4.1 (P) Upload API へのタイムアウト追加
+- [x] 4. Upload フォームのタイムアウト対応
+- [x] 4.1 (P) Upload API へのタイムアウト追加
 
   - `components/upload-form.tsx` で `AbortController` を追加
   - 30 秒超過時にエラー Toast 表示
