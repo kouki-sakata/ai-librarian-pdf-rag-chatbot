@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { getChatErrorMessage } from "@/lib/error-messages";
+import { createClient } from "@/lib/supabase/client";
 import type {
   ChatSessionResponse,
   Message,
@@ -21,24 +22,28 @@ const isMetadataChunk = (
 ): payload is StreamMetadataChunk =>
   payload.type === "metadata" && Array.isArray(payload.citations);
 
-const getAuthToken = () => {
-  if (typeof window === "undefined") return null;
-  const candidates = [
-    localStorage.getItem("sb-access-token"),
-    localStorage.getItem("supabase.auth.token"),
-  ].filter(Boolean) as string[];
+const getApiUrl = () => {
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+};
 
-  for (const raw of candidates) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.access_token) return parsed.access_token;
-      if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
-    } catch {
-      return raw;
+const getAuthToken = async (): Promise<string | null> => {
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error("Supabase auth error:", error);
+      return null;
     }
-  }
 
-  return process.env.NEXT_PUBLIC_DEV_JWT || null;
+    return session?.access_token ?? null;
+  } catch (error) {
+    console.error("Failed to get Supabase session:", error);
+    return null;
+  }
 };
 
 export function useChat() {
@@ -52,8 +57,9 @@ export function useChat() {
     setIsInitializingSession(true);
     setSessionError(null);
     try {
-      const token = getAuthToken();
-      const res = await fetch("http://localhost:8000/api/v1/chat/sessions", {
+      const token = await getAuthToken();
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/v1/chat/sessions`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -79,9 +85,16 @@ export function useChat() {
 
     setIsLoading(true);
 
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 30000); // 30 seconds timeout
+
     try {
-      const token = getAuthToken();
-      const res = await fetch("http://localhost:8000/api/v1/chat", {
+      const token = await getAuthToken();
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/v1/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,7 +104,10 @@ export function useChat() {
           session_id: sessionId,
           query: query,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         throw new Error(getChatErrorMessage(res, "message"));
@@ -183,7 +199,16 @@ export function useChat() {
         }
       }
     } catch (error) {
-      const errorMessage = getChatErrorMessage(error, "message");
+      clearTimeout(timeoutId);
+
+      let errorMessage: string;
+
+      // Check if it's an AbortError (timeout)
+      if (error instanceof DOMException && error.name === "AbortError") {
+        errorMessage = "リクエストがタイムアウトしました（30秒）。もう一度お試しください。";
+      } else {
+        errorMessage = getChatErrorMessage(error, "message");
+      }
 
       // Add error message to chat
       const errorMsg: Message = {
