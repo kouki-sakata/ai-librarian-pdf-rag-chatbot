@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+backend/.env
 backend/.venv/
 backend/tests/performance/
 backend/tests/security/
