@@ -32,5 +32,11 @@ typecheck:
 test:
 	uv run pytest
 
+check:
+	uv run ruff check --fix .
+	uv run ruff format .
+	uv run mypy app
+	uv run pytest
+
 test-watch:
 	uv run pytest-watch
