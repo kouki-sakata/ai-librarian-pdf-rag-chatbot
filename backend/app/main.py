@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints import chat, health, upload
+from app.api.v1.endpoints import chat, documents, health, upload
 from app.core.config import settings
 from app.core.middleware import AuthMiddleware
 
@@ -31,6 +31,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["upload"])
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
 
 # Instrument FastAPI
 FastAPIInstrumentor.instrument_app(app)

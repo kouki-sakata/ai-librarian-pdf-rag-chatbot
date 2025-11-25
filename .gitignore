@@ -2,11 +2,13 @@
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
-.env
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.env
+.venv/
+backend/tests/performance/
+backend/tests/security/
 
 # Node
 node_modules/
@@ -24,7 +26,7 @@ coverage/
 # Supabase
 supabase/functions/*/.env
 
-backend/tests/performance/
+
 
 backend/.coverage
 
@@ -33,3 +35,4 @@ backend/.coverage
 
 # codex
 .codex
+backend/.env

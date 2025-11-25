@@ -34,6 +34,7 @@ export interface Message {
     source: string;
     page?: number;
     similarity?: number;
+    doc_id?: string;
   }>;
   isEmptyResult?: boolean;
   canRetry?: boolean;

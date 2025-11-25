@@ -93,21 +93,21 @@
 
 ## Phase 2: Enhanced UX & Feature Completeness
 
-- [ ] 8. セッション状態管理
-- [ ] 8.1 (P) SessionContext 作成
+- [x] 8. セッション状態管理
+- [x] 8.1 (P) SessionContext 作成
 
   - `contexts/session-context.tsx` で `sessionId` と `setSessionId` を管理
   - `SessionProvider` で app layout をラップ
   - _Requirements: 4.2_
 
-- [ ] 9. Chat History サイドバー UI
-- [ ] 9.1 shadcn/ui Sidebar コンポーネント追加
+- [x] 9. Chat History サイドバー UI
+- [x] 9.1 shadcn/ui Sidebar コンポーネント追加
 
   - `npx shadcn add sidebar` でインストール
   - App layout に Sidebar を統合（左側配置）
   - _Requirements: 4.1_
 
-- [ ] 9.2 HistorySidebar コンポーネント実装
+- [x] 9.2 HistorySidebar コンポーネント実装
 
   - セッション一覧を取得（`GET /api/v1/chat/sessions?limit=20`）
   - セッション選択時に `SessionContext` を更新
@@ -115,20 +115,20 @@
   - 「New Chat」ボタンを追加
   - _Requirements: 4.1, 4.2, 4.7, 4.8_
 
-- [ ] 9.3 セッション削除機能
+- [x] 9.3 セッション削除機能
 
   - 削除ボタンクリック時に確認モーダル表示
   - `DELETE /api/v1/chat/sessions/{id}` を呼び出し
   - 削除後にリストを更新
   - _Requirements: 4.6_
 
-- [ ] 9.4 無限スクロール実装
+- [x] 9.4 無限スクロール実装
 
   - 初期 20 件取得後、スクロール時に追加取得（offset 管理）
   - _Requirements: 4.5_
 
-- [ ] 10. Chat History Backend API
-- [ ] 10.1 (P) GET /sessions エンドポイント追加
+- [x] 10. Chat History Backend API
+- [x] 10.1 (P) GET /sessions エンドポイント追加
 
   - `backend/app/api/v1/endpoints/chat.py` に `list_sessions` を追加
   - `HistoryService.list_sessions()` を呼び出し
@@ -136,49 +136,49 @@
   - セッション title を最初のユーザーメッセージから生成
   - _Requirements: 4.1, 4.5_
 
-- [ ] 10.2 (P) DELETE /sessions/{id} エンドポイント追加
+- [x] 10.2 (P) DELETE /sessions/{id} エンドポイント追加
 
   - `chat.py` に `delete_session` を追加
   - `HistoryService.delete_session()` で cascade 削除
   - tenant_id 確認後に削除
   - _Requirements: 4.6_
 
-- [ ] 10.3 (P) HistoryService メソッド拡張
+- [x] 10.3 (P) HistoryService メソッド拡張
 
   - `backend/app/services/history.py` に `list_sessions()` を追加
   - `delete_session()` を追加（chat_messages cascade）
   - _Requirements: 4.1, 4.6_
 
-- [ ] 11. Document Management UI
-- [ ] 11.1 DocumentList コンポーネント実装
+- [x] 11. Document Management UI
+- [x] 11.1 DocumentList コンポーネント実装
 
   - サイドバー内にタブ追加（Chat History と並列）
   - `GET /api/v1/documents?sort=created_at&order=desc` でドキュメント一覧取得
   - Filename, Size, Upload date を表示
   - _Requirements: 5.1, 5.5, 5.7_
 
-- [ ] 11.2 ドキュメント削除機能
+- [x] 11.2 ドキュメント削除機能
 
   - 削除ボタンクリック時に確認モーダル表示
   - `DELETE /api/v1/documents/{id}` を呼び出し
   - 削除後にリストを更新
   - _Requirements: 5.2, 5.3, 5.6_
 
-- [ ] 12. Document Management Backend API
-- [ ] 12.1 (P) documents.py エンドポイントファイル作成
+- [x] 12. Document Management Backend API
+- [x] 12.1 (P) documents.py エンドポイントファイル作成
 
   - `backend/app/api/v1/endpoints/documents.py` を新規作成
   - Router を main app に登録
   - _Requirements: 5.1, 5.2_
 
-- [ ] 12.2 (P) GET /documents エンドポイント実装
+- [x] 12.2 (P) GET /documents エンドポイント実装
 
   - `list_documents` で documents テーブルから取得
   - `sort`, `order` パラメータでソート対応
   - tenant_id フィルタ適用
   - _Requirements: 5.1, 5.7_
 
-- [ ] 12.3 (P) DELETE /documents/{id} エンドポイント実装
+- [x] 12.3 (P) DELETE /documents/{id} エンドポイント実装
 
   - Supabase Storage からファイル削除
   - documents テーブルから削除
@@ -186,15 +186,15 @@
   - トランザクション失敗時にロールバック
   - _Requirements: 5.2, 5.3, 5.4_
 
-- [ ] 13. Citation クリック可能リンク実装
-- [ ] 13.1 (P) chat-message.tsx 拡張
+- [x] 13. Citation クリック可能リンク実装
+- [x] 13.1 (P) chat-message.tsx 拡張
 
   - Citation テキストを clickable link に変換（アイコン付き）
   - クリック時に `GET /api/v1/documents/{id}/url?page={N}` を呼び出し
   - Signed URL を新しいタブで開く（`window.open()`）
   - _Requirements: 6.2, 6.3_
 
-- [ ] 13.2 (P) GET /documents/{id}/url エンドポイント実装
+- [x] 13.2 (P) GET /documents/{id}/url エンドポイント実装
 
   - `documents.py` に `get_document_url` を追加
   - Supabase Storage で Signed URL 生成（1 時間有効）
@@ -211,6 +211,5 @@
 
 - [ ] 15. Phase 2 統合テスト
 - [ ] 15.1\* モバイルテスト
-  - iOS Safari でログイン → チャット → History → Documents
-  - Chrome (Android) で同様のフロー確認
+  - Chrome (Android) でログイン → チャット → History → Documents
   - _Requirements: 3.3_
