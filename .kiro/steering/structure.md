@@ -9,7 +9,7 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 ### Frontend (Next.js 16)
 
 **Location**: `/frontend/`
-**Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。
+**Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、認証は `frontend/app/login` と `frontend/app/auth`（callback）で処理。UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。
 **Supporting Modules**: 共通ロジックは `frontend/hooks`（例: `use-chat.ts` が SSE/stream を管理）、ユーティリティは `frontend/lib`、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。
 **Path Alias**: `@/*` → `frontend/` ルート配下。
 
@@ -17,7 +17,7 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 
 **Location**: `/backend/`
 **Purpose**: FastAPI エンドポイントを `app/api/v1/endpoints` に配置し、処理は `app/services` にまとめるシンプルなサービスレイヤ構成。`app/core` に設定・CORS・メトリクスのほか Supabase JWT 検証ミドルウェアと supabase-py クライアント生成を集約（`telemetry.py` が OpenTelemetry + Prometheus exporter を起動）。
-**Example**: `app/api/v1/endpoints/upload.py` → `IngestionService` が `StorageService`（supabase-py で Storage バケットへ書き込み）と `VectorStoreService`（psycopg + pgvector でベクトル upsert/search）をオーケストレーション。チャット履歴は `HistoryService` が Supabase テーブル `chat_sessions/chat_messages` を介して管理。
+**Example**: `app/api/v1/endpoints/upload.py` → `IngestionService` が `StorageService`（supabase-py で Storage バケットへ書き込み）と `VectorStoreService`（psycopg + pgvector でベクトル upsert/search）をオーケストレーション。チャット履歴は `HistoryService` が Supabase テーブル `chat_sessions/chat_messages` を介して管理。`parser.py` で PDF 解析、`retriever.py` で検索ロジックを担当。
 
 ### Contracts & Shared Schemas
 
@@ -29,7 +29,7 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 
 ## Naming Conventions
 
-- Frontend: コンポーネントは PascalCase (`UploadForm.tsx`)、hooks は camelCase (`useChat.ts`)
+- Frontend: コンポーネントファイル名は kebab-case (`upload-form.tsx`)、コンポーネント名は PascalCase (`UploadForm`)。hooks は camelCase (`use-chat.ts`)
 - Backend: Python モジュール/ファイルは snake*case、テストは `test*\*.py`
 - DTO/Schema: Pydantic モデルは PascalCase、型エイリアスは camelCase
 - 環境変数: `OPENAI_MODEL`, `SUPABASE_PROJECT_REF` のように SCREAMING_SNAKE_CASE
@@ -56,4 +56,4 @@ from app.services.vector_store import VectorStoreService
 - 取り込みフローは「保存 → 抽出 →embed→index」を単一サービスで直列実行し、メトリクスで閾値監視
 - Chat 応答は NDJSON ストリーミングを前提にし、エラー時は UI へ明示的にトースト + メッセージを返す
 
-updated_at: 2025-11-22
+updated_at: 2025-11-25
