@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self'",
+      // Next.js が生成するインラインのブートストラップ/Flight スクリプトを許可
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "connect-src 'self' https: wss: http://localhost:8000 ws://localhost:5173",

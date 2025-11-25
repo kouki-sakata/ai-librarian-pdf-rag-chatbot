@@ -131,6 +131,9 @@ async def verify_jwt(token: str) -> dict[str, Any]:
             detail="Incorrect claims, please check the audience and issuer",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except HTTPException as exc:
+        # Propagate HTTP exceptions raised intentionally above
+        raise exc
     except Exception as e:
         # Distinguish between auth failure and other errors if possible, but 401 is generally safe for auth issues
         print(f"Auth error: {e}")

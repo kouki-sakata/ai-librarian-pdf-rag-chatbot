@@ -100,13 +100,15 @@ class Settings(BaseSettings):
     @field_validator("SUPABASE_JWT_SECRET")
     @classmethod
     def validate_supabase_jwt_secret(cls, v: str | None, info: ValidationInfo) -> str | None:
-        """Disallow HS256 shared secret in production and keep optional elsewhere."""
-        env_value = info.data.get("ENVIRONMENT") if info.data else None
-        env = str(env_value or os.getenv("ENVIRONMENT", "development")).lower()
-        if env == "production" and v:
-            raise ValueError(
-                "SUPABASE_JWT_SECRET must not be set in production (use RS256 via JWKS)"
-            )
+        """
+        Allow HS256 shared secret in all environments.
+
+        Supabase がデフォルトで発行する HS256 トークンを本番でも検証できるように、
+        production でも SUPABASE_JWT_SECRET を許容する。RS256/JWKS 運用に移行する場合は
+        環境変数を未設定にし、クライアント側の alg を RS256 に切り替える。
+        """
+        if v == "":
+            raise ValueError("SUPABASE_JWT_SECRET must be a non-empty string or omitted")
         return v
 
 

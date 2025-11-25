@@ -99,6 +99,20 @@ async def test_verify_jwt_hs256_success(mock_settings):
 
 
 @pytest.mark.asyncio
+async def test_verify_jwt_hs256_missing_secret(mock_settings):
+    """HS256 だが設定が無い場合は 401 を返す"""
+    mock_settings.SUPABASE_JWT_SECRET = None
+    token = jwt.encode({"sub": "user123"}, "any-secret", algorithm="HS256")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await verify_jwt(token)
+
+    assert exc_info.value.status_code == 401
+    assert "not configured" in exc_info.value.detail
+    assert "WWW-Authenticate" in exc_info.value.headers
+
+
+@pytest.mark.asyncio
 async def test_verify_jwt_expired_token(mock_settings):
     """Test JWT verification with expired token"""
     import time
