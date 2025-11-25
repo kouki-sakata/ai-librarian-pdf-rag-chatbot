@@ -94,7 +94,9 @@ describe("HistorySidebar", () => {
       </SessionProvider>
     );
 
-    expect(screen.getByText("New Chat")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("New Chat")).toBeInTheDocument();
+    });
   });
 
   it("deletes a session", async () => {
@@ -145,7 +147,13 @@ describe("HistorySidebar", () => {
     // Let's say we have 2 items but total is 4.
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ items: mockSessions, total: 4 }),
+      json: async () => ({
+        items: [
+          { id: "3", title: "Session 3", updated_at: "2023-01-03T00:00:00Z" },
+          { id: "4", title: "Session 4", updated_at: "2023-01-04T00:00:00Z" },
+        ],
+        total: 4,
+      }),
     });
 
     render(

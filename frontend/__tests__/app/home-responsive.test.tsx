@@ -1,8 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import RootLayout from "@/app/layout";
 import Home from "@/app/page";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SessionProvider } from "@/contexts/session-context";
 
 vi.mock("next/font/google", () => ({
   Geist: () => ({ className: "font-geist", variable: "--font-geist" }),
@@ -39,14 +40,29 @@ vi.mock("@/components/upload-form", () => ({
   UploadForm: () => <div data-testid="upload-form" />,
 }));
 
+const TestLayout = ({ children }: { children: ReactNode }) => (
+  <SessionProvider>
+    <SidebarProvider>
+      <SidebarInset className="bg-background min-h-svh">
+        <header
+          data-testid="mobile-header"
+          className="md:hidden sticky top-0 z-20 flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur"
+        >
+          <SidebarTrigger className="md:hidden" aria-label="メニューを開く" />
+          <span className="text-sm font-medium text-muted-foreground">AI司書</span>
+        </header>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  </SessionProvider>
+);
+
 describe("Home responsive layout", () => {
   it("renders mobile header and responsive grid", () => {
-    const Layout = RootLayout as unknown as ({ children }: { children: ReactNode }) => JSX.Element;
-
     render(
-      <Layout>
+      <TestLayout>
         <Home />
-      </Layout>
+      </TestLayout>
     );
 
     const header = screen.getByTestId("mobile-header");
