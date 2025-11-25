@@ -92,12 +92,15 @@ export function ChatInterface() {
   }
 
   return (
-    <Card className="w-full h-[600px] flex flex-col">
+    <Card
+      data-testid="chat-card"
+      className="w-full h-[70vh] min-h-[520px] lg:h-[calc(100vh-8rem)] lg:min-h-[640px] flex flex-col"
+    >
       <CardHeader>
         <CardTitle>AI司書チャット</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
+        <ScrollArea data-testid="chat-scroll" className="flex-1 min-h-0 p-4" ref={scrollAreaRef}>
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               ドキュメントについて何でも聞いてください!
