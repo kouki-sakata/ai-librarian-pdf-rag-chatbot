@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -7,7 +8,7 @@ from app.services.storage import StorageService
 
 
 @pytest.fixture
-def mock_supabase_client():
+def mock_supabase_client() -> Generator[MagicMock, None, None]:
     """Mock Supabase client for storage operations"""
     with patch("app.services.storage.get_supabase_client") as mock:
         client = MagicMock()
@@ -16,14 +17,14 @@ def mock_supabase_client():
 
 
 @pytest.fixture
-def mock_settings():
+def mock_settings() -> Generator[MagicMock, None, None]:
     with patch("app.services.storage.settings") as mock:
         mock.SUPABASE_STORAGE_BUCKET = "test-bucket"
         yield mock
 
 
 @pytest.fixture
-def sample_upload_file():
+def sample_upload_file() -> MagicMock:
     """Create a sample UploadFile for testing"""
     file = MagicMock(spec=UploadFile)
     file.filename = "test.pdf"
@@ -165,9 +166,9 @@ async def test_download_file_not_found(mock_supabase_client, mock_settings):
 
     # Mock storage download error
     mock_error = MagicMock()
-    mock_download_response = MagicMock()
-    mock_download_response.error = mock_error
-    mock_supabase_client.storage.from_.return_value.download.return_value = mock_download_response
+    mock_error.message = "File not found"
+    # Return a tuple (data, error) as expected by the new implementation
+    mock_supabase_client.storage.from_.return_value.download.return_value = (None, mock_error)
 
     with pytest.raises(HTTPException) as exc_info:
         await StorageService.download_file(tenant_id, path)

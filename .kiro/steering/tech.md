@@ -12,7 +12,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 
 ## Key Libraries
 
-- UI: Tailwind CSS 4 + shadcn/ui、react-markdown（回答表示）
+- UI: Tailwind CSS 4 + shadcn/ui、react-markdown（回答表示）、@supabase/ssr（Server-side Auth）
 - API/Domain: FastAPI, Pydantic v2, LangChain 1.0（Retriever/Chat chain）
 - Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW 検索。`SUPABASE_DB_URL` と bucket/role key が前提）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）

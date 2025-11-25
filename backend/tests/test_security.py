@@ -55,13 +55,16 @@ async def test_get_jwks_cache(mock_settings):
         mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
         # First call should fetch from network
-        result1 = await get_jwks()
+        # Mock time to initial value
+        with patch("app.core.security.time.time", return_value=100.0):
+            result1 = await get_jwks()
         assert result1 == mock_jwks
 
         # Second call should use cache (no network call)
-        with patch("app.core.security.time.time", return_value=100):
+        # Advance time slightly (within cache duration)
+        with patch("app.core.security.time.time", return_value=150.0):
             result2 = await get_jwks()
-            assert result2 == mock_jwks
+        assert result2 == mock_jwks
 
 
 @pytest.mark.asyncio
@@ -93,6 +96,20 @@ async def test_verify_jwt_hs256_success(mock_settings):
     result = await verify_jwt(token)
     assert result["sub"] == "user123"
     assert result["role"] == "authenticated"
+
+
+@pytest.mark.asyncio
+async def test_verify_jwt_hs256_missing_secret(mock_settings):
+    """HS256 だが設定が無い場合は 401 を返す"""
+    mock_settings.SUPABASE_JWT_SECRET = None
+    token = jwt.encode({"sub": "user123"}, "any-secret", algorithm="HS256")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await verify_jwt(token)
+
+    assert exc_info.value.status_code == 401
+    assert "not configured" in exc_info.value.detail
+    assert "WWW-Authenticate" in exc_info.value.headers
 
 
 @pytest.mark.asyncio

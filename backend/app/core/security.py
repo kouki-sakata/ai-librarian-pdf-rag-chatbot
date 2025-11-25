@@ -51,7 +51,14 @@ async def verify_jwt(token: str) -> dict[str, Any]:
         header = jwt.get_unverified_header(token)
         alg = header.get("alg")
 
-        if alg == "HS256" and settings.SUPABASE_JWT_SECRET:
+        if alg == "HS256":
+            if not settings.SUPABASE_JWT_SECRET:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="HS256 token provided but SUPABASE_JWT_SECRET is not configured",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
             # Test/Dev mode using shared secret
             payload: dict[str, Any] = jwt.decode(
                 token,
@@ -124,6 +131,9 @@ async def verify_jwt(token: str) -> dict[str, Any]:
             detail="Incorrect claims, please check the audience and issuer",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except HTTPException as exc:
+        # Propagate HTTP exceptions raised intentionally above
+        raise exc
     except Exception as e:
         # Distinguish between auth failure and other errors if possible, but 401 is generally safe for auth issues
         print(f"Auth error: {e}")
