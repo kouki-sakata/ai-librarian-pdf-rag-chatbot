@@ -11,21 +11,21 @@ repos:
     hooks:
       - id: ruff
         name: ruff
-        entry: bash -c 'cd backend && poetry run ruff check --fix'
+        entry: bash -c 'cd backend && uv run ruff check --fix'
         language: system
         types: [python]
         files: ^backend/
 
       - id: ruff-format
         name: ruff format
-        entry: bash -c 'cd backend && poetry run ruff format'
+        entry: bash -c 'cd backend && uv run ruff format'
         language: system
         types: [python]
         files: ^backend/
 
       - id: mypy
         name: mypy
-        entry: bash -c 'cd backend && poetry run mypy .'
+        entry: bash -c 'cd backend && uv run mypy .'
         language: system
         pass_filenames: false
         files: ^backend/
