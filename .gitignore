@@ -9,6 +9,7 @@ __pycache__/
 .venv/
 backend/tests/performance/
 backend/tests/security/
+htmlcov/
 
 # Node
 node_modules/
