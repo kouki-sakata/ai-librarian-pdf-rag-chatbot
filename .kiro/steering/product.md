@@ -24,4 +24,4 @@ PDF をナレッジ化し、RAG で出典付き回答を返す AI 司書（チ�
 - Hexagonal な分離で UI・LLM・ベクトル層を差し替え容易にし、拡張性を確保
 - 型安全（TypeScript/Pydantic）と静的解析を前提に品質を維持
 
-updated_at: 2025-11-22
+updated_at: 2025-11-25
