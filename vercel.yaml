@@ -1,0 +1,15 @@
+# Vercel deployment config for Next.js frontend (located in /frontend)
+version: 2
+
+builds:
+  - src: frontend/package.json
+    use: "@vercel/next"
+    config:
+      rootDir: frontend
+
+# Environment variables (set in Vercel dashboard, not committed):
+# NEXT_PUBLIC_API_URL: https://<render-backend>/
+# NEXT_PUBLIC_SUPABASE_URL: https://<project>.supabase.co
+# NEXT_PUBLIC_SUPABASE_ANON_KEY: <anon key>
+
+# No custom routes required; Next.js handles routing under /frontend

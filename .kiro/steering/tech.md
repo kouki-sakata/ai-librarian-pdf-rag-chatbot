@@ -13,8 +13,8 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ## Key Libraries
 
 - UI: Tailwind CSS 4 + shadcn/ui、react-markdown（回答表示）、@supabase/ssr（Server-side Auth）
-- API/Domain: FastAPI, Pydantic v2, LangChain 1.0（Retriever/Chat chain）
-- Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW 検索。`SUPABASE_DB_URL` と bucket/role key が前提）
+- API/Domain: FastAPI, Pydantic v2。チャット生成は LangChain のチェーンは使わず、AsyncOpenAI で直接ストリーミング応答を構築（LangChain は embeddings/text splitter のみ）。
+- Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW index を使用しつつ `set_config('app.tenant_id', …)` で RLS を効かせる。`SUPABASE_DB_URL` と bucket/role key が前提）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）
 - Parsing/Chunking: pypdf + RecursiveCharacterTextSplitter
 - Tooling: dotenv で設定注入、CORS middleware、openapi-typescript（型生成）
@@ -33,7 +33,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 
 ### Auth & Tenant Context
 
-- FastAPI middleware (`core/middleware.py`) で Supabase JWT（RS256 前提）を検証し、`tenant_id` を contextvars にセット
+- FastAPI middleware (`core/middleware.py`) で Supabase JWT を検証（RS256/JWKS + HS256 fallback）。`tenant_id` を contextvars にセットし、RLS 付き DB 操作は `app.tenant_id` を DB session に設定して評価させる
 - API ハンドラ/サービスは context から tenant_id を取得し、Supabase Storage/DB でも同じ tenant 境界を強制
 
 ### Testing
@@ -90,5 +90,6 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 - OpenAI モデルは設定切替可能にし、温度/トップ k/コンテキスト長を設定ファイル化
 - Observability: ingestion/chat latency と embedding throughput のメトリクスを収集し、閾値越えでアラート
 - OpenTelemetry + Prometheus exporter は `METRICS_SERVER_ENABLED=true` のときのみ 9464 ポートで公開（デフォルト有効だが CI では無効化を推奨）
+- Chat API は AsyncOpenAI のストリームを NDJSON (`token` 連打 → 最終 `metadata`) で返却し、チャット履歴は Supabase テーブルへ記録
 
 updated_at: 2025-11-25

@@ -11,10 +11,10 @@ services:
       cd backend
       uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.0
       - key: ENVIRONMENT
         value: production
+      - key: PYTHON_VERSION
+        value: 3.12.0
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_PROJECT_REF
@@ -22,6 +22,10 @@ services:
       - key: SUPABASE_DB_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: documents
+      - key: SUPABASE_JWT_SECRET
         sync: false
       - key: OPENAI_API_KEY
         sync: false
@@ -31,4 +35,6 @@ services:
         value: "false"
       - key: BACKEND_CORS_ORIGINS
         sync: false
+      - key: METRICS_SERVER_ENABLED
+        value: "true"
     healthCheckPath: /api/v1/health/
