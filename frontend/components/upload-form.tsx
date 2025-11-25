@@ -44,12 +44,15 @@ export function UploadForm() {
       controller.abort();
     }, 30000); // 30 seconds timeout
 
+    // Declare interval outside try block so it can be cleaned up in finally
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     try {
       // Simulate progress
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(interval);
+            if (interval) clearInterval(interval);
             return 90;
           }
           return prev + 10;
@@ -62,9 +65,6 @@ export function UploadForm() {
         body: formData,
         signal: controller.signal,
       });
-
-      clearInterval(interval);
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -81,8 +81,6 @@ export function UploadForm() {
         duration: 2000,
       });
     } catch (error) {
-      clearTimeout(timeoutId);
-
       let errorMessage: string;
 
       // Check if it's an AbortError (timeout)
@@ -99,6 +97,9 @@ export function UploadForm() {
         duration: 3000,
       });
     } finally {
+      // Clean up both timers in finally block to ensure cleanup happens always
+      clearTimeout(timeoutId);
+      if (interval) clearInterval(interval);
       setIsUploading(false);
     }
   };
