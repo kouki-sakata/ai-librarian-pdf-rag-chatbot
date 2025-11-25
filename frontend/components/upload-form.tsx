@@ -38,24 +38,33 @@ export function UploadForm() {
     const formData = new FormData();
     formData.append("file", file);
 
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 30000); // 30 seconds timeout
+
+    // Declare interval outside try block so it can be cleaned up in finally
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     try {
       // Simulate progress
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(interval);
+            if (interval) clearInterval(interval);
             return 90;
           }
           return prev + 10;
         });
       }, 100);
 
-      const res = await fetch("http://localhost:8000/api/v1/upload/", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/v1/upload/`, {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
-
-      clearInterval(interval);
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -72,7 +81,15 @@ export function UploadForm() {
         duration: 2000,
       });
     } catch (error) {
-      const errorMessage = getUploadErrorMessage(error);
+      let errorMessage: string;
+
+      // Check if it's an AbortError (timeout)
+      if (error instanceof DOMException && error.name === "AbortError") {
+        errorMessage = "アップロードがタイムアウトしました（30秒）。もう一度お試しください。";
+      } else {
+        errorMessage = getUploadErrorMessage(error);
+      }
+
       setError(errorMessage);
 
       toast.error("アップロード失敗", {
@@ -80,6 +97,9 @@ export function UploadForm() {
         duration: 3000,
       });
     } finally {
+      // Clean up both timers in finally block to ensure cleanup happens always
+      clearTimeout(timeoutId);
+      if (interval) clearInterval(interval);
       setIsUploading(false);
     }
   };
