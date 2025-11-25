@@ -47,23 +47,40 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ### Required Tools
 
 - Node.js 20+, npm または pnpm
-- Python 3.12+, uv/venv
+- Python 3.12+, **uv** (高速パッケージマネージャー、venv/pip の代替)
 - Docker Compose（Supabase, pgvector を dev で起動）
 - Supabase CLI（ローカル RLS/ストレージ確認に使用）
+
+### Package Management
+
+- **Backend**: `uv` で依存管理・仮想環境・実行を統合。`pyproject.toml` で定義、`uv run` でコマンド実行
+- **Frontend**: `npm` で依存管理、`package.json` の `scripts` で開発フロー定義
 
 ### Common Commands
 
 ```bash
 # Frontend dev: npm run dev --prefix frontend
-# Backend dev: uvicorn app.main:app --reload
-# Backend commands (Makefile):
+# Backend dev: cd backend && make dev (or: uv run uvicorn app.main:app --reload)
+
+# Code Quality Check (unified workflow)
+# Backend (from backend/):
+#   make check      - Run lint-fix → format → typecheck → test in sequence
 #   make lint       - Run ruff linter
 #   make lint-fix   - Run ruff linter with auto-fix
 #   make format     - Run ruff formatter
 #   make typecheck  - Run mypy type checker
 #   make test       - Run pytest
-# Frontend test: npm test --prefix frontend
+# Frontend (from frontend/):
+#   npm run check   - Run lint:fix → format → typecheck → test in sequence
+
+# Coverage
+#   Backend: uv run pytest --cov=app --cov-report=term-missing
+#   Frontend: npm run test -- --coverage
 ```
+
+### Pre-commit Hooks
+
+`.pre-commit-config.yaml` で lint/format/typecheck を自動実行。バックエンドは `uv run` 経由で ruff + mypy、フロントエンドは npm scripts 経由で biome + tsc を呼び出し。
 
 ## Key Technical Decisions
 
@@ -74,4 +91,4 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 - Observability: ingestion/chat latency と embedding throughput のメトリクスを収集し、閾値越えでアラート
 - OpenTelemetry + Prometheus exporter は `METRICS_SERVER_ENABLED=true` のときのみ 9464 ポートで公開（デフォルト有効だが CI では無効化を推奨）
 
-updated_at: 2025-11-22
+updated_at: 2025-11-25
