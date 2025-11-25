@@ -4,14 +4,15 @@ import { UploadForm } from "@/components/upload-form";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-background">
-      <div className="z-10 max-w-5xl w-full items-start justify-between font-mono text-sm lg:flex gap-8">
-        <div className="w-full lg:w-1/3">
+    <main data-testid="main-shell" className="min-h-[calc(100vh-4rem)] bg-background">
+      <div
+        data-testid="content-grid"
+        className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[360px,1fr] lg:px-8"
+      >
+        <div className="flex flex-col gap-4">
           <UploadForm />
         </div>
-        <div className="w-full lg:w-2/3 mt-8 lg:mt-0">
-          <ChatInterface />
-        </div>
+        <ChatInterface />
       </div>
       <Toaster />
     </main>

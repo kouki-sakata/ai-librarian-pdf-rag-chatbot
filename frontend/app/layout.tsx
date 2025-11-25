@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SessionProvider } from "@/contexts/session-context";
 
 const geistSans = Geist({
@@ -34,10 +34,16 @@ export default function RootLayout({
         <SessionProvider>
           <SidebarProvider>
             <AppSidebar />
-            <main className="w-full">
-              <SidebarTrigger />
+            <SidebarInset className="bg-background min-h-svh">
+              <header
+                data-testid="mobile-header"
+                className="lg:hidden sticky top-0 z-20 flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur"
+              >
+                <SidebarTrigger className="lg:hidden" aria-label="メニューを開く" />
+                <span className="text-sm font-medium text-muted-foreground">AI司書</span>
+              </header>
               {children}
-            </main>
+            </SidebarInset>
           </SidebarProvider>
         </SessionProvider>
       </body>

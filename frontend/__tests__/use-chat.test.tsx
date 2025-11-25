@@ -221,16 +221,12 @@ describe("useChat hook", () => {
     });
 
     // Start sending message
-    const sendPromise = act(async () => {
-      await result.current.sendMessage("timeout test");
-    });
-
-    // Fast-forward time by 30 seconds to trigger timeout
+    // Send message and advance timers within a single act to avoid warnings
     await act(async () => {
+      const sendPromise = result.current.sendMessage("timeout test");
       await vi.advanceTimersByTimeAsync(30000);
+      await sendPromise;
     });
-
-    await sendPromise;
 
     // Verify error message was added
     const lastMessage = result.current.messages.at(-1);

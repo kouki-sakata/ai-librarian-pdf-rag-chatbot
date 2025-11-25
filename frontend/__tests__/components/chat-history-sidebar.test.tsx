@@ -37,6 +37,29 @@ vi.mock("@/components/ui/sidebar", () => ({
   }),
 }));
 
+// Mock Dialog components
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: ReactNode;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <button type="button" data-testid="dialog" onClick={() => onOpenChange(false)}>
+        {children}
+      </button>
+    ) : null,
+  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogDescription: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
 const mockSessions = [
   { id: "1", title: "Session 1", updated_at: "2023-01-01T00:00:00Z" },
   { id: "2", title: "Session 2", updated_at: "2023-01-02T00:00:00Z" },
@@ -94,7 +117,9 @@ describe("HistorySidebar", () => {
       </SessionProvider>
     );
 
-    expect(screen.getByText("New Chat")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("New Chat")).toBeInTheDocument();
+    });
   });
 
   it("deletes a session", async () => {
@@ -145,7 +170,13 @@ describe("HistorySidebar", () => {
     // Let's say we have 2 items but total is 4.
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ items: mockSessions, total: 4 }),
+      json: async () => ({
+        items: [
+          { id: "3", title: "Session 3", updated_at: "2023-01-03T00:00:00Z" },
+          { id: "4", title: "Session 4", updated_at: "2023-01-04T00:00:00Z" },
+        ],
+        total: 4,
+      }),
     });
 
     render(

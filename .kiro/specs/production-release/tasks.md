@@ -201,15 +201,15 @@
   - `page` パラメータがある場合 `#page=N` フラグメントを追加
   - _Requirements: 6.4_
 
-- [ ] 14. レスポンシブデザイン対応
-- [ ] 14.1 (P) モバイルレイアウト調整
+- [x] 14. レスポンシブデザイン対応
+- [x] 14.1 (P) モバイルレイアウト調整
 
   - Tailwind breakpoints（`sm`, `md`, `lg`）で Sidebar を調整
   - デスクトップ（`lg:`）で常時表示、モバイルでハンバーガーメニュー
   - Chat Interface のモバイル最適化（縦スクロール）
   - _Requirements: 3.3_
 
-- [ ] 15. Phase 2 統合テスト
-- [ ] 15.1\* モバイルテスト
+- [x] 15. Phase 2 統合テスト
+- [x] 15.1\* モバイルテスト
   - Chrome (Android) でログイン → チャット → History → Documents
   - _Requirements: 3.3_
