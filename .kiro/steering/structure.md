@@ -10,7 +10,7 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 
 **Location**: `/frontend/`
 **Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、認証は `frontend/app/login` と `frontend/app/auth`（callback）で処理。UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。
-**Supporting Modules**: 共通ロジックは `frontend/hooks`（例: `use-chat.ts` が SSE/stream を管理）、ユーティリティは `frontend/lib`、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。
+**Supporting Modules**: 共通ロジックは `frontend/hooks`（例: `use-chat.ts` が SSE/stream を管理）、ユーティリティは `frontend/lib`（`frontend/lib/supabase` に Auth クライアントを集約）、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。
 **Path Alias**: `@/*` → `frontend/` ルート配下。
 
 ### Backend (FastAPI)

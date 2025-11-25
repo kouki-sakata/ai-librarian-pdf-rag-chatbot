@@ -93,6 +93,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
             # Process request
             try:
                 response = await call_next(request)
+
+                # Add security headers
+                if settings.FORCE_HTTPS:
+                    response.headers["Strict-Transport-Security"] = (
+                        "max-age=31536000; includeSubDomains"
+                    )
+                response.headers["X-Content-Type-Options"] = "nosniff"
+                response.headers["X-Frame-Options"] = "DENY"
+                response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
                 return response
             finally:
                 # Reset context after request

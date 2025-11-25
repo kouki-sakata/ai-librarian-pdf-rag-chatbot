@@ -67,12 +67,30 @@ class StorageService:
         client = get_supabase_client()
         bucket = settings.SUPABASE_STORAGE_BUCKET
 
-        response: Any = client.storage.from_(bucket).download(path)
-
-        if getattr(response, "error", None):
+        try:
+            response = client.storage.from_(bucket).download(path)
+        except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found or access denied",
+                detail=f"File not found or access denied: {str(e)}",
             )
 
-        return bytes(response)
+        # Handle tuple return (data, error)
+        if isinstance(response, tuple):
+            data, error = response
+            if error:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"File not found or access denied: {error}",
+                )
+            return data
+
+        # Handle raw bytes return
+        if isinstance(response, (bytes, bytearray)):
+            return bytes(response)
+
+        # Fallback for unexpected return type
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected response type from storage: {type(response)}",
+        )

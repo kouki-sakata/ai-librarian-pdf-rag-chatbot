@@ -55,13 +55,16 @@ async def test_get_jwks_cache(mock_settings):
         mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
         # First call should fetch from network
-        result1 = await get_jwks()
+        # Mock time to initial value
+        with patch("app.core.security.time.time", return_value=100.0):
+            result1 = await get_jwks()
         assert result1 == mock_jwks
 
         # Second call should use cache (no network call)
-        with patch("app.core.security.time.time", return_value=100):
+        # Advance time slightly (within cache duration)
+        with patch("app.core.security.time.time", return_value=150.0):
             result2 = await get_jwks()
-            assert result2 == mock_jwks
+        assert result2 == mock_jwks
 
 
 @pytest.mark.asyncio
