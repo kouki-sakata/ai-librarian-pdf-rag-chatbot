@@ -56,9 +56,51 @@ export function ChatMessage({ role, content, citations, isEmptyResult }: ChatMes
                 <div className="font-semibold text-foreground">出典</div>
                 <ul className="list-disc list-inside space-y-0.5">
                   {citations.map((c, idx) => (
-                    <li key={`${c.source}-${idx}`}>
-                      {c.source}
-                      {c.page ? ` p.${c.page}` : ""}
+                    <li key={`${c.source}-${idx}`} className="flex items-center gap-1">
+                      {c.doc_id ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const apiUrl =
+                                process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                              const url = `${apiUrl}/api/v1/documents/${
+                                c.doc_id
+                              }/url${c.page ? `?page=${c.page}` : ""}`;
+                              const response = await fetch(url);
+                              if (response.ok) {
+                                const data = await response.json();
+                                window.open(data.url, "_blank");
+                              }
+                            } catch (error) {
+                              console.error("Failed to open document", error);
+                            }
+                          }}
+                          className="text-primary hover:underline flex items-center gap-1"
+                        >
+                          {c.source}
+                          {c.page ? ` p.${c.page}` : ""}
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <title>Open document</title>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </button>
+                      ) : (
+                        <span>
+                          {c.source}
+                          {c.page ? ` p.${c.page}` : ""}
+                        </span>
+                      )}
                       {typeof c.similarity === "number"
                         ? ` (score: ${c.similarity.toFixed(2)})`
                         : ""}

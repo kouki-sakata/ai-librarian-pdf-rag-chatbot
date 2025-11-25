@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -66,3 +66,29 @@ async def create_session() -> dict[str, str]:
     history = HistoryService()
     session_id = await history.create_session(tenant_id)
     return {"session_id": session_id}
+
+
+@router.get("/sessions")
+async def list_sessions(limit: int = 20, offset: int = 0) -> dict[str, Any]:
+    """List chat sessions for the authenticated tenant."""
+    tenant_id = tenant_id_context.get()
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="Tenant ID missing")
+
+    history = HistoryService()
+    return await history.list_sessions(tenant_id=tenant_id, limit=limit, offset=offset)
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str) -> dict[str, str]:
+    """Delete a chat session and all its messages."""
+    tenant_id = tenant_id_context.get()
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="Tenant ID missing")
+
+    history = HistoryService()
+    try:
+        await history.delete_session(tenant_id=tenant_id, session_id=session_id)
+        return {"status": "deleted"}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
