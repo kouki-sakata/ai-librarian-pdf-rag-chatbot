@@ -35,3 +35,4 @@ backend/.coverage
 
 # codex
 .codex
+backend/.env
