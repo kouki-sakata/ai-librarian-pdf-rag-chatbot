@@ -56,34 +56,34 @@
   - 30 秒超過時にエラー Toast 表示
   - _Requirements: 3.5_
 
-- [ ] 5. デプロイ設定
-- [ ] 5.1 (P) 環境変数ドキュメント作成
+- [x] 5. デプロイ設定
+- [x] 5.1 (P) 環境変数ドキュメント作成
 
   - `.env.example` を Frontend/Backend に作成
   - Vercel/Render で必要な環境変数をリスト化
   - _Requirements: 1.4, 1.5_
 
-- [ ] 5.2 README 更新
+- [x] 5.2 README 更新
 
   - デプロイ URL をトップに追加（`🌐 **Live Demo**: [URL]`）
   - 環境変数設定手順を記載
   - _Requirements: 1.3_
 
-- [ ] 5.3 Backend DISABLE_AUTH 無効化
+- [x] 5.3 Backend DISABLE_AUTH 無効化
 
   - Render 環境変数で `DISABLE_AUTH=false` を設定
   - Production デプロイ後に動作確認
   - _Requirements: 2.1_
 
-- [ ] 6. Supabase ダッシュボード設定
-- [ ] 6.1 (P) Auth プロバイダー有効化
+- [x] 6. Supabase ダッシュボード設定
+- [x] 6.1 (P) Auth プロバイダー有効化
 
   - Supabase ダッシュボードで Email provider を有効化
   - Anonymous Sign-ins を有効化
   - _Requirements: 2.3_
 
-- [ ] 7. Phase 1 統合テスト
-- [ ] 7.1\* タイムアウト処理テスト
+- [x] 7. Phase 1 統合テスト
+- [x] 7.1\* タイムアウト処理テスト
   - Chat API 呼び出しで 30 秒超過を模擬
   - Upload API 呼び出しで 30 秒超過を模擬
   - Toast エラー表示を確認
