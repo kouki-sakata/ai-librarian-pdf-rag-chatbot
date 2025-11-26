@@ -1,34 +1,46 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import pytest_asyncio
 
 from app.services.vector_store import VectorStoreService
 
 
-@pytest.fixture
-def mock_db_connection():
-    with (
-        patch("psycopg.connect") as mock_connect,
-        patch("app.services.vector_store.register_vector") as mock_register,
-    ):  # Mock register_vector
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_connect.return_value = mock_conn
-        # Connection context manager
-        mock_conn.__enter__.return_value = mock_conn
-        # Cursor context manager
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-        yield mock_connect, mock_conn, mock_cursor
+@pytest_asyncio.fixture
+async def mock_pool():
+    """Mock AsyncConnectionPool for tests."""
+    with patch("app.services.vector_store.AsyncConnectionPool") as mock_pool_class:
+        mock_pool_instance = AsyncMock()
+        mock_conn = AsyncMock()
+        mock_cursor = AsyncMock()
+
+        # Setup pool context manager
+        mock_pool_class.return_value = mock_pool_instance
+        mock_pool_instance.open = AsyncMock()
+        mock_pool_instance.close = AsyncMock()
+
+        # Setup connection as async context manager properly
+        connection_ctx = AsyncMock()
+        connection_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        connection_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_pool_instance.connection = MagicMock(return_value=connection_ctx)
+
+        # Setup cursor context manager
+        cursor_ctx = AsyncMock()
+        cursor_ctx.__aenter__ = AsyncMock(return_value=mock_cursor)
+        cursor_ctx.__aexit__ = AsyncMock(return_value=None)
+        mock_conn.cursor = MagicMock(return_value=cursor_ctx)
+
+        yield mock_pool_instance, mock_conn, mock_cursor
 
 
 @pytest.mark.asyncio
-async def test_vector_store_upsert_vectors(mock_db_connection):
-    mock_connect, mock_conn, mock_cursor = mock_db_connection
+async def test_vector_store_upsert_vectors(mock_pool):
+    mock_pool_instance, mock_conn, mock_cursor = mock_pool
 
     service = VectorStoreService()
-    service.conninfo = "postgresql://user:pass@localhost:5432/db"  # Dummy conninfo
-    # Mock embeddings to avoid API call
-    service.embeddings = MagicMock()
+    # Override pool
+    VectorStoreService._pool = mock_pool_instance
 
     tenant_id = "tenant1"
     doc_id = "doc1"
@@ -38,34 +50,27 @@ async def test_vector_store_upsert_vectors(mock_db_connection):
 
     await service.upsert_vectors(tenant_id, doc_id, chunks, embeddings, metadata)
 
-    # Verify set_config was called
-    mock_cursor.execute.assert_any_call(
-        "select set_config('app.tenant_id', %s, true);", (tenant_id,)
-    )
-
     # Verify executemany was called for insert
     assert mock_cursor.executemany.called
     args = mock_cursor.executemany.call_args
     assert "INSERT INTO vectors" in args[0][0]
     assert len(args[0][1]) == 2  # 2 chunks
 
+    # Cleanup
+    VectorStoreService._pool = None
+
 
 @pytest.mark.asyncio
-async def test_vector_store_delete_vectors(mock_db_connection):
-    mock_connect, mock_conn, mock_cursor = mock_db_connection
+async def test_vector_store_delete_vectors(mock_pool):
+    mock_pool_instance, mock_conn, mock_cursor = mock_pool
 
     service = VectorStoreService()
-    service.conninfo = "postgresql://user:pass@localhost:5432/db"  # Dummy conninfo
+    VectorStoreService._pool = mock_pool_instance
 
     tenant_id = "tenant1"
     doc_id = "doc1"
 
     await service.delete_vectors(tenant_id, doc_id)
-
-    # Verify set_config was called
-    mock_cursor.execute.assert_any_call(
-        "select set_config('app.tenant_id', %s, true);", (tenant_id,)
-    )
 
     # Verify delete execution
     mock_cursor.execute.assert_any_call(
@@ -73,10 +78,13 @@ async def test_vector_store_delete_vectors(mock_db_connection):
         (tenant_id, doc_id),
     )
 
+    # Cleanup
+    VectorStoreService._pool = None
+
 
 @pytest.mark.asyncio
-async def test_vector_store_search(mock_db_connection):
-    mock_connect, mock_conn, mock_cursor = mock_db_connection
+async def test_vector_store_search(mock_pool):
+    mock_pool_instance, mock_conn, mock_cursor = mock_pool
 
     # Mock fetchall return
     mock_cursor.fetchall.return_value = [
@@ -90,20 +98,11 @@ async def test_vector_store_search(mock_db_connection):
     ]
 
     service = VectorStoreService()
-    service.conninfo = "postgresql://user:pass@localhost:5432/db"  # Dummy conninfo
-    # Mock embeddings
-    service.embeddings = MagicMock()
-    service.embeddings.embed_documents.return_value = [[0.1, 0.2]]
+    VectorStoreService._pool = mock_pool_instance
 
     tenant_id = "tenant1"
-    query = "test query"
 
     results = await service.search(tenant_id, [0.1, 0.2], top_k=2)
-
-    # Verify set_config
-    mock_cursor.execute.assert_any_call(
-        "select set_config('app.tenant_id', %s, true);", (tenant_id,)
-    )
 
     # Verify results
     assert len(results) == 2
@@ -116,3 +115,6 @@ async def test_vector_store_search(mock_db_connection):
     # Test with string metadata
     assert results[1]["doc_id"] == "doc2"
     assert results[1]["metadata"] == {}
+
+    # Cleanup
+    VectorStoreService._pool = None

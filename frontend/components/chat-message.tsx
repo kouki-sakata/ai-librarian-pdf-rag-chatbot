@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { memo, useMemo } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { Message } from "@/types";
@@ -11,7 +12,50 @@ interface ChatMessageProps {
   isEmptyResult?: boolean;
 }
 
-export function ChatMessage({ role, content, citations, isEmptyResult }: ChatMessageProps) {
+export const ChatMessage = memo(function ChatMessage({
+  role,
+  content,
+  citations,
+  isEmptyResult,
+}: ChatMessageProps) {
+  const markdownComponents = useMemo<Components>(
+    () => ({
+      pre: ({ node, ...props }) => (
+        <div className="overflow-auto w-full my-2 bg-black/10 p-2 rounded-lg">
+          <pre {...props} />
+        </div>
+      ),
+      code: ({ node, ...props }) => <code className="bg-black/10 rounded-md px-1" {...props} />,
+      a: ({ href, children, ...props }) => {
+        const safeHref = (() => {
+          if (!href) return undefined;
+          const normalized = href.trim().toLowerCase();
+          if (
+            normalized.startsWith("http://") ||
+            normalized.startsWith("https://") ||
+            normalized.startsWith("/")
+          ) {
+            return href;
+          }
+          return undefined;
+        })();
+
+        return (
+          <a
+            href={safeHref}
+            rel="noreferrer noopener"
+            target="_blank"
+            className="text-primary underline underline-offset-2"
+            {...props}
+          >
+            {children}
+          </a>
+        );
+      },
+    }),
+    []
+  );
+
   return (
     <div className={cn("flex w-full mb-4", role === "user" ? "justify-end" : "justify-start")}>
       <div
@@ -35,46 +79,7 @@ export function ChatMessage({ role, content, citations, isEmptyResult }: ChatMes
                 </div>
               </div>
             ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                skipHtml
-                components={{
-                  pre: ({ node, ...props }) => (
-                    <div className="overflow-auto w-full my-2 bg-black/10 p-2 rounded-lg">
-                      <pre {...props} />
-                    </div>
-                  ),
-                  code: ({ node, ...props }) => (
-                    <code className="bg-black/10 rounded-md px-1" {...props} />
-                  ),
-                  a: ({ href, children, ...props }) => {
-                    const safeHref = (() => {
-                      if (!href) return undefined;
-                      const normalized = href.trim().toLowerCase();
-                      if (
-                        normalized.startsWith("http://") ||
-                        normalized.startsWith("https://") ||
-                        normalized.startsWith("/")
-                      ) {
-                        return href;
-                      }
-                      return undefined;
-                    })();
-
-                    return (
-                      <a
-                        href={safeHref}
-                        rel="noreferrer noopener"
-                        target="_blank"
-                        className="text-primary underline underline-offset-2"
-                        {...props}
-                      >
-                        {children}
-                      </a>
-                    );
-                  },
-                }}
-              >
+              <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml components={markdownComponents}>
                 {content}
               </ReactMarkdown>
             )}
@@ -143,4 +148,4 @@ export function ChatMessage({ role, content, citations, isEmptyResult }: ChatMes
       </div>
     </div>
   );
-}
+});

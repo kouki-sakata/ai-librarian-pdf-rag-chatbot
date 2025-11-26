@@ -6,38 +6,75 @@ import json
 from typing import Any
 
 import psycopg
+from async_lru import alru_cache
 from langchain_openai import OpenAIEmbeddings
 from pgvector.psycopg import register_vector
+from psycopg_pool import AsyncConnectionPool
 from pydantic import SecretStr
 
 from app.core.config import settings
 
 
 class VectorStoreService:
+    _pool: AsyncConnectionPool | None = None
+    _pool_lock: asyncio.Lock = asyncio.Lock()
+
     def __init__(self) -> None:
         self.embeddings = OpenAIEmbeddings(
             model=settings.OPENAI_EMBEDDING_MODEL,
             openai_api_key=SecretStr(settings.OPENAI_API_KEY),
         )
-        self.conninfo = settings.SUPABASE_DB_URL
 
-    def _get_conn(self) -> psycopg.Connection:
-        if not self.conninfo:
-            raise RuntimeError("SUPABASE_DB_URL is not configured")
-        conn = psycopg.connect(self.conninfo, autocommit=True)
-        register_vector(conn)
-        return conn
+    @classmethod
+    async def get_pool(cls) -> AsyncConnectionPool:
+        """Get or create connection pool singleton."""
+        async with cls._pool_lock:
+            if cls._pool is None:
+                if not settings.SUPABASE_DB_URL:
+                    raise RuntimeError("SUPABASE_DB_URL is not configured")
+                cls._pool = AsyncConnectionPool(
+                    conninfo=settings.SUPABASE_DB_URL,
+                    min_size=2,
+                    max_size=10,
+                    open=False,
+                    configure=lambda conn: register_vector(conn),
+                )
+                await cls._pool.open()
+            return cls._pool
+
+    @classmethod
+    async def close_pool(cls) -> None:
+        """Close the connection pool."""
+        async with cls._pool_lock:
+            if cls._pool is not None:
+                await cls._pool.close()
+                cls._pool = None
 
     @staticmethod
-    def _set_tenant(cur: psycopg.Cursor, tenant_id: str) -> None:
+    async def _set_tenant(cur: psycopg.AsyncCursor, tenant_id: str) -> None:
+        """Set app.tenant_id for the current transaction so RLS policies evaluate correctly."""
+        await cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+
+    @alru_cache(maxsize=128, ttl=3600)
+    async def _generate_embeddings_cached(self, text_tuple: tuple[str, ...]) -> list[list[float]]:
         """
-        Set app.tenant_id for the current transaction so RLS policies evaluate correctly.
+        Generate embeddings with caching (instance-scoped alru_cache; reset per service instance).
+        maxsize=128 and ttl=3600 balance memory footprint and OpenAI API cost by caching recent prompts for 1 hour.
+        Consider making maxsize/ttl configurable (env or service config) for production tuning.
         """
-        cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+
+        def _sync_embed() -> list[list[float]]:
+            return self.embeddings.embed_documents(list(text_tuple))
+
+        return await asyncio.to_thread(_sync_embed)
 
     def generate_embeddings(self, chunks: list[str]) -> list[list[float]]:
-        """Generate embeddings for a list of text chunks."""
+        """Generate embeddings for a list of text chunks (sync wrapper for compatibility)."""
         return self.embeddings.embed_documents(chunks)
+
+    async def generate_embeddings_async(self, chunks: list[str]) -> list[list[float]]:
+        """Generate embeddings asynchronously with caching."""
+        return await self._generate_embeddings_cached(tuple(chunks))
 
     async def upsert_vectors(
         self,
@@ -48,16 +85,17 @@ class VectorStoreService:
         metadata: list[dict[str, Any]] | None = None,
     ) -> None:
         """Persist chunk embeddings into pgvector with idempotent upsert."""
+        pool = await self.get_pool()
+        metadata_param = metadata or []
 
-        def _upsert() -> None:
-            with self._get_conn() as conn, conn.cursor() as cur:
-                self._set_tenant(cur, tenant_id)
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await self._set_tenant(cur, tenant_id)
 
                 records = []
-                metadata = metadata_param or []
                 for idx, (chunk, emb) in enumerate(zip(chunks, embeddings)):
                     chunk_hash = hashlib.sha1(chunk.encode("utf-8")).hexdigest()
-                    meta = metadata[idx] if idx < len(metadata) else {}
+                    meta = metadata_param[idx] if idx < len(metadata_param) else {}
                     meta.setdefault("doc_id", doc_id)
                     meta.setdefault("tenant_id", tenant_id)
                     meta.setdefault("chunk_index", idx + 1)
@@ -73,7 +111,7 @@ class VectorStoreService:
                         )
                     )
 
-                cur.executemany(
+                await cur.executemany(
                     """
                     INSERT INTO vectors (tenant_id, doc_id, chunk_hash, content, metadata, embedding)
                     VALUES (%s, %s, %s, %s, %s::jsonb, %s)
@@ -85,31 +123,28 @@ class VectorStoreService:
                     records,
                 )
 
-        metadata_param = metadata
-        await asyncio.to_thread(_upsert)
-
     async def delete_vectors(self, tenant_id: str, doc_id: str) -> None:
         """Delete all vectors for a document in a tenant scope."""
+        pool = await self.get_pool()
 
-        def _delete() -> None:
-            with self._get_conn() as conn, conn.cursor() as cur:
-                self._set_tenant(cur, tenant_id)
-                cur.execute(
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await self._set_tenant(cur, tenant_id)
+                await cur.execute(
                     "DELETE FROM vectors WHERE tenant_id = %s AND doc_id = %s",
                     (tenant_id, doc_id),
                 )
-
-        await asyncio.to_thread(_delete)
 
     async def search(
         self, tenant_id: str, query_embedding: list[float], top_k: int = 5
     ) -> list[dict[str, Any]]:
         """Semantic search constrained by tenant_id."""
+        pool = await self.get_pool()
 
-        def _search() -> list[dict[str, Any]]:
-            with self._get_conn() as conn, conn.cursor() as cur:
-                self._set_tenant(cur, tenant_id)
-                cur.execute(
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await self._set_tenant(cur, tenant_id)
+                await cur.execute(
                     """
                     SELECT doc_id,
                            content,
@@ -122,7 +157,7 @@ class VectorStoreService:
                     """,
                     (query_embedding, tenant_id, top_k),
                 )
-                rows = cur.fetchall()
+                rows = await cur.fetchall()
                 return [
                     {
                         "doc_id": str(row[0]),
@@ -134,5 +169,3 @@ class VectorStoreService:
                     }
                     for row in rows
                 ]
-
-        return await asyncio.to_thread(_search)
