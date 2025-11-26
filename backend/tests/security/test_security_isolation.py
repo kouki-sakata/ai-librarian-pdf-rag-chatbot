@@ -48,8 +48,8 @@ def test_auth_middleware_rejects_expired_token():
     assert "Token has expired" in response.json()["detail"]
 
 
-def test_auth_middleware_rejects_missing_tenant_id():
-    # Token without tenant_id
+def test_auth_middleware_uses_sub_as_tenant_id_fallback():
+    # Token without tenant_id but with sub - should use sub as tenant_id
     payload = {
         "sub": "user_no_tenant",
         "aud": "authenticated",
@@ -58,8 +58,22 @@ def test_auth_middleware_rejects_missing_tenant_id():
     }
     token = jwt.encode(payload, "test-secret", algorithm="HS256")
     response = client.get(f"{settings.API_V1_STR}/", headers={"Authorization": f"Bearer {token}"})
+    # Should not be 401 - sub is used as fallback for tenant_id
+    # Will be 404 because the root endpoint doesn't exist
+    assert response.status_code == 404
+
+
+def test_auth_middleware_rejects_missing_tenant_id_and_sub():
+    # Token without both tenant_id and sub - should be rejected
+    payload = {
+        "aud": "authenticated",
+        "exp": int(time.time()) + 3600,
+        "role": "authenticated",
+    }
+    token = jwt.encode(payload, "test-secret", algorithm="HS256")
+    response = client.get(f"{settings.API_V1_STR}/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
-    assert "Missing tenant_id" in response.json()["detail"]
+    assert "Missing tenant_id or sub" in response.json()["detail"]
 
 
 def test_tenant_isolation_context():

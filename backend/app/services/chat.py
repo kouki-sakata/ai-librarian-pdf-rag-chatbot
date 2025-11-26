@@ -94,7 +94,11 @@ class ChatService:
                     client.table("documents").select("id, filename").in_("id", doc_ids).execute()
                 )
                 for doc in result.data:
-                    doc_id_to_filename[doc["id"]] = doc["filename"]
+                    if isinstance(doc, dict):
+                        doc_id_val = doc.get("id")
+                        filename_val = doc.get("filename")
+                        if isinstance(doc_id_val, str) and isinstance(filename_val, str):
+                            doc_id_to_filename[doc_id_val] = filename_val
             except Exception as e:
                 logger.warning(f"Failed to fetch document filenames: {e}")
 
@@ -104,7 +108,13 @@ class ChatService:
             meta = item.get("metadata", {}) or {}
             doc_id = meta.get("doc_id")
             # ファイル名を優先的に使用（なければsource、それもなければdoc_id）
-            source = doc_id_to_filename.get(doc_id) or meta.get("source") or doc_id or "unknown"
+            source: str = "unknown"
+            if isinstance(doc_id, str) and doc_id in doc_id_to_filename:
+                source = doc_id_to_filename[doc_id]
+            elif meta.get("source"):
+                source = str(meta.get("source"))
+            elif doc_id:
+                source = str(doc_id)
             page = meta.get("page")
             similarity = item.get("similarity")
 
