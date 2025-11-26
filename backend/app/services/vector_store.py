@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import inspect
 import json
 from typing import Any
 
@@ -49,14 +48,9 @@ class VectorStoreService:
             cls._pool = None
 
     @staticmethod
-    async def _set_tenant(cur: psycopg.Cursor | psycopg.AsyncCursor, tenant_id: str) -> None:
-        """
-        Set app.tenant_id for the current transaction so RLS policies evaluate correctly.
-        Works with both sync and async cursors.
-        """
-        result = cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
-        if inspect.isawaitable(result):
-            await result
+    async def _set_tenant(cur: psycopg.AsyncCursor, tenant_id: str) -> None:
+        """Set app.tenant_id for the current transaction so RLS policies evaluate correctly."""
+        await cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
 
     @alru_cache(maxsize=128, ttl=3600)
     async def _generate_embeddings_cached(self, text_tuple: tuple[str, ...]) -> list[list[float]]:
