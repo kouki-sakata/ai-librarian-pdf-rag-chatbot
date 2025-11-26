@@ -39,20 +39,8 @@ vi.mock("@/components/ui/sidebar", () => ({
 
 // Mock Dialog components
 vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({
-    children,
-    open,
-    onOpenChange,
-  }: {
-    children: ReactNode;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-  }) =>
-    open ? (
-      <button type="button" data-testid="dialog" onClick={() => onOpenChange(false)}>
-        {children}
-      </button>
-    ) : null,
+  Dialog: ({ children, open }: { children: ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
