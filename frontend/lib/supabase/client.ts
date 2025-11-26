@@ -1,6 +1,27 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+type BrowserSupabaseClient = ReturnType<typeof createBrowserClient>;
+
+const createTestSupabaseClient = (): BrowserSupabaseClient =>
+  ({
+    auth: {
+      getSession: async () => ({
+        data: {
+          session: {
+            access_token: process.env.NEXT_PUBLIC_SUPABASE_TEST_ACCESS_TOKEN ?? "test-access-token",
+          },
+        },
+        error: null,
+      }),
+    },
+  }) as BrowserSupabaseClient;
+
 export function createClient() {
+  // vitestなどのテスト実行時はモッククライアントを返して外部通信を避ける
+  if (process.env.NODE_ENV === "test") {
+    return createTestSupabaseClient();
+  }
+
   // 開発環境と本番環境で使用する環境変数を明確に分離
   const isDevelopment = process.env.NODE_ENV === "development";
 

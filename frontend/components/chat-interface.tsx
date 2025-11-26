@@ -32,13 +32,21 @@ export function ChatInterface() {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector(
         "[data-radix-scroll-area-viewport]"
-      );
+      ) as HTMLElement | null;
       if (scrollContainer) {
-        // スムーズにスクロール
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: "smooth",
-        });
+        const canSmoothScroll =
+          typeof (scrollContainer as HTMLElement & { scrollTo?: unknown }).scrollTo === "function";
+        if (canSmoothScroll) {
+          // JSdom環境ではscrollToが未実装のため存在チェックを行う
+          (
+            scrollContainer as HTMLElement & { scrollTo: (options: ScrollToOptions) => void }
+          ).scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: "smooth",
+          });
+        } else {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
       }
     }
   }, []);
