@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +31,18 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
+// Helper to render with QueryClient
+const renderWithQueryClient = (ui: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+};
+
 describe("DocumentList", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -55,7 +68,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => {
       expect(screen.getByText("test.pdf")).toBeInTheDocument();
@@ -69,7 +82,7 @@ describe("DocumentList", () => {
         new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: async () => [] }), 100))
     );
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
@@ -80,7 +93,7 @@ describe("DocumentList", () => {
       json: async () => [],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => {
       expect(screen.getByText("No documents yet")).toBeInTheDocument();
@@ -88,18 +101,13 @@ describe("DocumentList", () => {
   });
 
   it("handles fetch error gracefully", async () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
     fetchMock.mockRejectedValueOnce(new Error("Network error"));
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => {
       expect(screen.getByText("No documents yet")).toBeInTheDocument();
     });
-
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    consoleErrorSpy.mockRestore();
   });
 
   it("deletes a document", async () => {
@@ -115,7 +123,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => screen.getByText("test.pdf"));
 
@@ -157,7 +165,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => screen.getByText("test.pdf"));
 
@@ -193,7 +201,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => screen.getByText("test.pdf"));
 
@@ -224,7 +232,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => {
       expect(screen.getByText(/1.*MB/i)).toBeInTheDocument();
@@ -262,7 +270,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => {
       expect(screen.getByText(/512 B/)).toBeInTheDocument();
@@ -285,7 +293,7 @@ describe("DocumentList", () => {
       ],
     });
 
-    render(<DocumentList />);
+    renderWithQueryClient(<DocumentList />);
 
     await waitFor(() => {
       // Date should be formatted as YYYY/MM/DD in Japanese locale

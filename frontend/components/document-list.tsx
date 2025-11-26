@@ -1,7 +1,8 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { File, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,53 +36,53 @@ function formatDate(dateString: string): string {
   });
 }
 
+const fetchDocuments = async (): Promise<Document[]> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const res = await fetch(`${apiUrl}/api/v1/documents?sort=created_at&order=desc`);
+  if (!res.ok) throw new Error("Failed to fetch documents");
+  return res.json();
+};
+
+const deleteDocument = async (id: string): Promise<void> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const res = await fetch(`${apiUrl}/api/v1/documents/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete document");
+};
+
 export function DocumentList() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchDocuments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${apiUrl}/api/v1/documents?sort=created_at&order=desc`);
-      if (res.ok) {
-        const data = await res.json();
-        setDocuments(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch documents", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: documents = [], isLoading } = useQuery<Document[]>({
+    queryKey: ["documents"],
+    queryFn: fetchDocuments,
+    refetchOnWindowFocus: true,
+  });
 
-  useEffect(() => {
-    void fetchDocuments();
-  }, [fetchDocuments]);
-
-  const confirmDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${apiUrl}/api/v1/documents/${deleteId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setDocuments((prev) => prev.filter((d) => d.id !== deleteId));
-        setDeleteId(null);
-      }
-    } catch (error) {
+  const deleteMutation = useMutation({
+    mutationFn: deleteDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      setDeleteId(null);
+    },
+    onError: (error) => {
       console.error("Failed to delete document", error);
-    }
+    },
+  });
+
+  const confirmDelete = () => {
+    if (!deleteId) return;
+    deleteMutation.mutate(deleteId);
   };
 
   return (
     <>
       <div className="flex flex-col h-full">
         <div className="flex-1 overflow-auto p-4 space-y-2">
-          {loading && <div className="text-sm text-muted-foreground">Loading...</div>}
-          {!loading && documents.length === 0 && (
+          {isLoading && <div className="text-sm text-muted-foreground">Loading...</div>}
+          {!isLoading && documents.length === 0 && (
             <div className="text-sm text-muted-foreground">No documents yet</div>
           )}
           {documents.map((doc) => (
@@ -122,8 +123,12 @@ export function DocumentList() {
             <Button variant="outline" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -11,9 +11,8 @@ class RetrieverService:
         """
         Retrieves relevant chunks for a query.
         """
-        # 1. Generate embedding for query
-        # Note: generate_embeddings expects a list
-        embeddings = self.vector_store.generate_embeddings([query])
+        # 1. Generate embedding for query with caching
+        embeddings = await self.vector_store.generate_embeddings_async([query])
         query_embedding = embeddings[0]
 
         # 2. Search vector store
