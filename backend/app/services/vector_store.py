@@ -25,20 +25,9 @@ class VectorStoreService:
             openai_api_key=SecretStr(settings.OPENAI_API_KEY),
         )
 
-class VectorStoreService:
-    _pool: AsyncConnectionPool | None = None
-    _pool_lock: asyncio.Lock | None = None
-
     @classmethod
     async def get_pool(cls) -> AsyncConnectionPool:
         """Get or create connection pool singleton."""
-        # Lazy initialization of lock on first use
-        if cls._pool_lock is None:
-            cls._pool_lock = asyncio.Lock()
-        
-        if cls._pool is not None:
-            return cls._pool
-        
         async with cls._pool_lock:
             if cls._pool is None:
                 if not settings.SUPABASE_DB_URL:
