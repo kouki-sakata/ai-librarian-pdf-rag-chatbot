@@ -81,24 +81,7 @@ class ChatService:
         for item in chunks:
             meta = item.get("metadata", {}) or {}
             source = meta.get("source") or meta.get("doc_id") or "unknown"
-            # Ensure page is never None, use 0 or "unknown" if missing, but type is int | None in model
-            # Frontend expects number or undefined. Let's use None if missing but handle it gracefully.
-            # User requested: never set page to None (use meta.get("page") or meta.get("chunk") or "unknown")
-            # But page is usually int. "unknown" would break int type.
-            # Let's use meta.get("page") and default to 1 if missing for now, or keep None if allowed by frontend?
-            # User said: "ensure you never set page to None ... or the string 'unknown'".
-            # If I use string "unknown", I must update Pydantic model to allow str.
-            # Current model: page: int | None.
-            # I will use meta.get("page") or 1 (as fallback) or just let it be None if I can't change model.
-            # Wait, user said "ensure you never set page to None".
-            # If I set it to "unknown", I need to change StreamCitation model.
-            # Let's check StreamCitation model again.
-            # It was updated to `page: int | None`.
-            # I will try to use integer if possible.
             page = meta.get("page")
-            if page is None:
-                # Try to extract from chunk index if available, or default to 1
-                page = meta.get("chunk")
             doc_id = meta.get("doc_id")
             similarity = item.get("similarity")
 

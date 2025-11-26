@@ -17,6 +17,7 @@ from app.core.config import settings
 
 class VectorStoreService:
     _pool: AsyncConnectionPool | None = None
+    _pool_lock: asyncio.Lock = asyncio.Lock()
 
     def __init__(self) -> None:
         self.embeddings = OpenAIEmbeddings(
@@ -55,9 +56,10 @@ class VectorStoreService:
     @classmethod
     async def close_pool(cls) -> None:
         """Close the connection pool."""
-        if cls._pool is not None:
-            await cls._pool.close()
-            cls._pool = None
+        async with cls._pool_lock:
+            if cls._pool is not None:
+                await cls._pool.close()
+                cls._pool = None
 
     @staticmethod
     async def _set_tenant(cur: psycopg.AsyncCursor, tenant_id: str) -> None:
@@ -67,8 +69,9 @@ class VectorStoreService:
     @alru_cache(maxsize=128, ttl=3600)
     async def _generate_embeddings_cached(self, text_tuple: tuple[str, ...]) -> list[list[float]]:
         """
-        Generate embeddings with caching. Uses tuple for hashability.
-        TTL is 1 hour to balance memory and API cost savings.
+        Generate embeddings with caching (instance-scoped alru_cache; reset per service instance).
+        maxsize=128 and ttl=3600 balance memory footprint and OpenAI API cost by caching recent prompts for 1 hour.
+        Consider making maxsize/ttl configurable (env or service config) for production tuning.
         """
 
         def _sync_embed() -> list[list[float]]:
