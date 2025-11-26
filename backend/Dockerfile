@@ -12,10 +12,13 @@ RUN apt-get update \
  && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/*
 
+# uv installer places the binary under ~/.local/bin for root. Add it to PATH.
+ENV PATH="/root/.local/bin:${PATH}"
+
 WORKDIR /app
 
-# Copy dependency manifests first for efficient layer caching
-COPY backend/pyproject.toml backend/uv.lock ./
+# Copy dependency manifests (and README needed for build metadata) first for efficient layer caching
+COPY backend/pyproject.toml backend/uv.lock backend/README.md ./
 
 # Install dependencies into project-local venv managed by uv
 RUN uv sync --frozen --no-dev

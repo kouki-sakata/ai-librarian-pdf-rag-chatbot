@@ -1,4 +1,4 @@
-# Vercel deployment config for Next.js frontend (located in /frontend)
+# Vercel deployment blueprint for the Next.js frontend (dev-ready defaults)
 version: 2
 
 builds:
@@ -7,9 +7,14 @@ builds:
     config:
       rootDir: frontend
 
-# Environment variables (set in Vercel dashboard, not committed):
-# NEXT_PUBLIC_API_URL: https://<render-backend>/
-# NEXT_PUBLIC_SUPABASE_URL: https://<project>.supabase.co
-# NEXT_PUBLIC_SUPABASE_ANON_KEY: <anon key>
+# Safe defaults for development; override in Vercel dashboard per environment.
+env:
+  NEXT_PUBLIC_API_URL: http://localhost:8000
+  NEXT_PUBLIC_SUPABASE_URL: https://boyaahqmckopcfgtuhwq.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJveWFhaHFtY2tvcGNmZ3R1aHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwMDc4MDgsImV4cCI6MjA3OTU4MzgwOH0.kmpYANuqQ__GjzbsWbMzgp73wgR_UN17mIPaOGAX_qE
 
+# Explicit commands for blueprint import
+installCommand: npm install --prefix frontend
+buildCommand: npm run build --prefix frontend
+devCommand: npm run dev --prefix frontend -- --hostname 0.0.0.0 --port 3000
 # No custom routes required; Next.js handles routing under /frontend

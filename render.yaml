@@ -1,20 +1,20 @@
 services:
   - type: web
-    name: ai-librarian-backend
+    name: ai-librarian-backend-dev
     env: python
+    plan: free
+    branch: main
     region: singapore
+    autoDeploy: false
     buildCommand: |
       cd backend
       pip install uv
-      uv sync
+      uv sync --frozen
     startCommand: |
       cd backend
       uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: ENVIRONMENT
-        value: production
-      - key: PYTHON_VERSION
-        value: 3.12.0
+      # -------- Required secrets (set at import time) --------
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_PROJECT_REF
@@ -23,18 +23,24 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: SUPABASE_STORAGE_BUCKET
-        value: documents
       - key: SUPABASE_JWT_SECRET
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: FORCE_HTTPS
-        value: "true"
+
+      # -------- Non-secret defaults for the dev blueprint --------
+      - key: ENVIRONMENT
+        value: development
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: SUPABASE_STORAGE_BUCKET
+        value: documents
       - key: DISABLE_AUTH
+        value: "true"
+      - key: FORCE_HTTPS
         value: "false"
       - key: BACKEND_CORS_ORIGINS
-        sync: false
+        value: '["http://localhost:3000","http://localhost:5173"]'
       - key: METRICS_SERVER_ENABLED
-        value: "true"
+        value: "false"
     healthCheckPath: /api/v1/health/
