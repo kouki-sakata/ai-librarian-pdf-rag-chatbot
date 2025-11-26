@@ -1,6 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import { memo, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { Message } from "@/types";
@@ -18,17 +18,15 @@ export const ChatMessage = memo(function ChatMessage({
   citations,
   isEmptyResult,
 }: ChatMessageProps) {
-  const markdownComponents = useMemo(
+  const markdownComponents = useMemo<Components>(
     () => ({
-      pre: ({ node, ...props }: any) => (
+      pre: ({ node, ...props }) => (
         <div className="overflow-auto w-full my-2 bg-black/10 p-2 rounded-lg">
           <pre {...props} />
         </div>
       ),
-      code: ({ node, ...props }: any) => (
-        <code className="bg-black/10 rounded-md px-1" {...props} />
-      ),
-      a: ({ href, children, ...props }: any) => {
+      code: ({ node, ...props }) => <code className="bg-black/10 rounded-md px-1" {...props} />,
+      a: ({ href, children, ...props }) => {
         const safeHref = (() => {
           if (!href) return undefined;
           const normalized = href.trim().toLowerCase();

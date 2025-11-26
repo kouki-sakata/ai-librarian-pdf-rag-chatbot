@@ -28,7 +28,14 @@ class ChatService:
             await self.history.add_message(tenant_id, session_id, "user", query)
             await self.history.add_message(tenant_id, session_id, "assistant", response)
         except Exception as e:
-            logger.error("Failed to save chat history", error=str(e), tenant_id=tenant_id)
+            # Log with structured extras to avoid mypy invalid keywords
+            logger.error(
+                "Failed to save chat history (tenant_id=%s): %s",
+                tenant_id,
+                str(e),
+                exc_info=e,
+                extra={"tenant_id": tenant_id},
+            )
 
     async def generate_response(
         self, tenant_id: str, session_id: str, query: str

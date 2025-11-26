@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import inspect
 import json
 from typing import Any
 
@@ -48,11 +49,14 @@ class VectorStoreService:
             cls._pool = None
 
     @staticmethod
-    def _set_tenant(cur: psycopg.Cursor | psycopg.AsyncCursor, tenant_id: str) -> None:
+    async def _set_tenant(cur: psycopg.Cursor | psycopg.AsyncCursor, tenant_id: str) -> None:
         """
         Set app.tenant_id for the current transaction so RLS policies evaluate correctly.
+        Works with both sync and async cursors.
         """
-        cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+        result = cur.execute("select set_config('app.tenant_id', %s, true);", (tenant_id,))
+        if inspect.isawaitable(result):
+            await result
 
     @alru_cache(maxsize=128, ttl=3600)
     async def _generate_embeddings_cached(self, text_tuple: tuple[str, ...]) -> list[list[float]]:
@@ -88,7 +92,7 @@ class VectorStoreService:
 
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
-                await asyncio.to_thread(self._set_tenant, cur, tenant_id)
+                await self._set_tenant(cur, tenant_id)
 
                 records = []
                 for idx, (chunk, emb) in enumerate(zip(chunks, embeddings)):
@@ -127,7 +131,7 @@ class VectorStoreService:
 
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
-                await asyncio.to_thread(self._set_tenant, cur, tenant_id)
+                await self._set_tenant(cur, tenant_id)
                 await cur.execute(
                     "DELETE FROM vectors WHERE tenant_id = %s AND doc_id = %s",
                     (tenant_id, doc_id),
@@ -141,7 +145,7 @@ class VectorStoreService:
 
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
-                await asyncio.to_thread(self._set_tenant, cur, tenant_id)
+                await self._set_tenant(cur, tenant_id)
                 await cur.execute(
                     """
                     SELECT doc_id,
