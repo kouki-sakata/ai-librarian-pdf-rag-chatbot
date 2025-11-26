@@ -90,7 +90,8 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 - Avoid helper functions when a simple inline expression would suffice
 - Use `knip` to remove unused code if making large changes
 - The `gh` CLI is installed, use it
-- Don’t use emojis
+- Don’t unnecessarily add `try`/`catch`
+- Don’t cast to `any`
 
 ## React
 
@@ -109,8 +110,3 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 - Use next/font + next/script when applicable
 - next/image above the fold should have `sync` / `eager` / use `priority` sparingly
 - Be mindful of serialized prop size for RSC → child components
-
-## TypeScript
-
-- Don’t unnecessarily add `try`/`catch`
-- Don’t cast to `any`
