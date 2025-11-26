@@ -9,7 +9,9 @@ class IngestionService:
         self.storage = StorageService()
         self.vector_store = VectorStoreService()
 
-    async def process_document(self, tenant_id: str, doc_id: str, file_path: str) -> int:
+    async def process_document(
+        self, tenant_id: str, doc_id: str, file_path: str, filename: str | None = None
+    ) -> int:
         """
         Orchestrates the ingestion process.
         """
@@ -34,11 +36,13 @@ class IngestionService:
             # 3. Split text
             chunks = self.parser.split_text(text)
 
+            # ファイル名が指定されていない場合はdoc_idを使用
+            source_name = filename or f"{doc_id}.pdf"
             metadata = [
                 {
                     "doc_id": doc_id,
                     "tenant_id": tenant_id,
-                    "source": f"{doc_id}.pdf",
+                    "source": source_name,
                     "page": idx + 1,
                     "chunk": idx + 1,
                 }

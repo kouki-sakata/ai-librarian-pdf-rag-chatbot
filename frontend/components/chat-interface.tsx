@@ -27,14 +27,18 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector(
         "[data-radix-scroll-area-viewport]"
       );
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        // スムーズにスクロール
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: "smooth",
+        });
       }
     }
   }, []);
@@ -92,15 +96,12 @@ export function ChatInterface() {
   }
 
   return (
-    <Card
-      data-testid="chat-card"
-      className="w-full h-[70vh] min-h-[520px] lg:h-[calc(100vh-8rem)] lg:min-h-[640px] flex flex-col"
-    >
-      <CardHeader>
-        <CardTitle>AI司書チャット</CardTitle>
+    <Card data-testid="chat-card" className="w-full h-full max-h-[calc(100vh-12rem)] flex flex-col">
+      <CardHeader className="py-3 flex-shrink-0">
+        <CardTitle className="text-lg">AI司書チャット</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <ScrollArea data-testid="chat-scroll" className="flex-1 min-h-0 p-4" ref={scrollAreaRef}>
+      <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
+        <ScrollArea data-testid="chat-scroll" className="h-full p-4" ref={scrollAreaRef}>
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               ドキュメントについて何でも聞いてください!

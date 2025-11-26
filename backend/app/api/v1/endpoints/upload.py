@@ -32,7 +32,9 @@ async def upload_document(file: UploadFile = File(...)) -> Any:
         file_path = f"{tenant_id}/docs/{doc_id}.pdf"
 
         ingestion_service = IngestionService()
-        await ingestion_service.process_document(tenant_id, doc_id, file_path)
+        await ingestion_service.process_document(
+            tenant_id, doc_id, file_path, filename=file.filename
+        )
 
         return {"status": "ingested", "doc_id": doc_id, "filename": file.filename}
     except Exception as e:

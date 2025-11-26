@@ -23,6 +23,8 @@ def get_supabase_client() -> Client:
     except ImportError as exc:  # pragma: no cover - guarded by dependency
         raise RuntimeError("supabase package is not installed") from exc
 
-    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+    url = settings.effective_supabase_url
+    service_role_key = settings.effective_supabase_service_role_key
+    if not url or not service_role_key:
         raise RuntimeError("Supabase credentials are not configured")
-    return create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+    return create_client(url, service_role_key)

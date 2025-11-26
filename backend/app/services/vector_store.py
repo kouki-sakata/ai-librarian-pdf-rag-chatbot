@@ -8,7 +8,7 @@ from typing import Any
 import psycopg
 from async_lru import alru_cache
 from langchain_openai import OpenAIEmbeddings
-from pgvector.psycopg import register_vector
+from pgvector.psycopg import register_vector_async
 from psycopg_pool import AsyncConnectionPool
 from pydantic import SecretStr
 
@@ -30,14 +30,21 @@ class VectorStoreService:
         """Get or create connection pool singleton."""
         async with cls._pool_lock:
             if cls._pool is None:
-                if not settings.SUPABASE_DB_URL:
-                    raise RuntimeError("SUPABASE_DB_URL is not configured")
+                db_url = settings.effective_supabase_db_url
+                if not db_url:
+                    raise RuntimeError(
+                        "SUPABASE_DB_URL (production) or SUPABASE_DEV_DB_URL (development) is not configured"
+                    )
+
+                async def configure_connection(conn: psycopg.AsyncConnection) -> None:
+                    await register_vector_async(conn)
+
                 cls._pool = AsyncConnectionPool(
-                    conninfo=settings.SUPABASE_DB_URL,
+                    conninfo=db_url,
                     min_size=2,
                     max_size=10,
                     open=False,
-                    configure=lambda conn: register_vector(conn),
+                    configure=configure_connection,
                 )
                 await cls._pool.open()
             return cls._pool

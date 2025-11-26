@@ -7,6 +7,7 @@ from openai import AsyncOpenAI
 
 from app.core.config import settings
 from app.core.logger import setup_logger
+from app.core.supabase_client import get_supabase_client
 from app.services.history import HistoryService
 from app.services.retriever import RetrieverService
 
@@ -76,13 +77,35 @@ class ChatService:
             return
 
         # 2. Build context and citations
+        # doc_idからファイル名を取得するためのキャッシュ
+        doc_id_to_filename: dict[str, str] = {}
+        doc_ids = list(
+            {
+                item.get("metadata", {}).get("doc_id")
+                for item in chunks
+                if item.get("metadata", {}).get("doc_id")
+            }
+        )
+
+        if doc_ids:
+            try:
+                client = get_supabase_client()
+                result = (
+                    client.table("documents").select("id, filename").in_("id", doc_ids).execute()
+                )
+                for doc in result.data:
+                    doc_id_to_filename[doc["id"]] = doc["filename"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch document filenames: {e}")
+
         context_parts = []
         citations: list[dict[str, Any]] = []
         for item in chunks:
             meta = item.get("metadata", {}) or {}
-            source = meta.get("source") or meta.get("doc_id") or "unknown"
-            page = meta.get("page")
             doc_id = meta.get("doc_id")
+            # ファイル名を優先的に使用（なければsource、それもなければdoc_id）
+            source = doc_id_to_filename.get(doc_id) or meta.get("source") or doc_id or "unknown"
+            page = meta.get("page")
             similarity = item.get("similarity")
 
             context_parts.append(item["content"])

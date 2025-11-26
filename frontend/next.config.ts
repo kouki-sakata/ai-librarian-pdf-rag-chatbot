@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
-      "connect-src 'self' https: wss: http://localhost:8000 ws://localhost:5173",
+      "connect-src 'self' https: wss: http://localhost:8000 ws://localhost:5173 http://127.0.0.1:54321",
       "font-src 'self' data:",
       "object-src 'none'",
       "frame-ancestors 'none'",
