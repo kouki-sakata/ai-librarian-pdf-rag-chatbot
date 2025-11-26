@@ -24,21 +24,33 @@ class VectorStoreService:
             openai_api_key=SecretStr(settings.OPENAI_API_KEY),
         )
 
+class VectorStoreService:
+    _pool: AsyncConnectionPool | None = None
+    _pool_lock: asyncio.Lock | None = None
+
     @classmethod
     async def get_pool(cls) -> AsyncConnectionPool:
         """Get or create connection pool singleton."""
-        if cls._pool is None:
-            if not settings.SUPABASE_DB_URL:
-                raise RuntimeError("SUPABASE_DB_URL is not configured")
-            cls._pool = AsyncConnectionPool(
-                conninfo=settings.SUPABASE_DB_URL,
-                min_size=2,
-                max_size=10,
-                open=False,
-                configure=lambda conn: register_vector(conn),
-            )
-            await cls._pool.open()
-        return cls._pool
+        # Lazy initialization of lock on first use
+        if cls._pool_lock is None:
+            cls._pool_lock = asyncio.Lock()
+        
+        if cls._pool is not None:
+            return cls._pool
+        
+        async with cls._pool_lock:
+            if cls._pool is None:
+                if not settings.SUPABASE_DB_URL:
+                    raise RuntimeError("SUPABASE_DB_URL is not configured")
+                cls._pool = AsyncConnectionPool(
+                    conninfo=settings.SUPABASE_DB_URL,
+                    min_size=2,
+                    max_size=10,
+                    open=False,
+                    configure=lambda conn: register_vector(conn),
+                )
+                await cls._pool.open()
+            return cls._pool
 
     @classmethod
     async def close_pool(cls) -> None:
