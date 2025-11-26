@@ -30,8 +30,8 @@ class Settings(BaseSettings):
 
     # 開発環境用のローカルSupabase設定（ENVIRONMENT=development の時に使用）
     SUPABASE_DEV_URL: str | None = Field(
-        default=None,
-        description="Development Supabase URL (required when ENVIRONMENT=development). Usually http://127.0.0.1:54321 for local Supabase",
+        default="http://127.0.0.1:54321",
+        description="Development Supabase URL (required when ENVIRONMENT=development). Defaults to http://127.0.0.1:54321 for local Supabase",
     )
     SUPABASE_DEV_PROJECT_REF: str | None = Field(
         default=None,
