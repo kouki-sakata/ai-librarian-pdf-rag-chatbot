@@ -199,8 +199,7 @@ class Settings(BaseSettings):
             if self.SUPABASE_URL:
                 return self.SUPABASE_URL
             raise ValueError(
-                f"Supabase URL must be set for ENVIRONMENT={env}. "
-                "Please set SUPABASE_URL."
+                f"Supabase URL must be set for ENVIRONMENT={env}. Please set SUPABASE_URL."
             )
 
     @property
