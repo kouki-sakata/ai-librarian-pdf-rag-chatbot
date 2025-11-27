@@ -5,7 +5,7 @@ services:
     plan: free
     branch: main
     region: singapore
-    autoDeploy: false
+    autoDeploy: true
     buildCommand: |
       cd backend
       pip install uv
@@ -30,15 +30,15 @@ services:
 
       # -------- Non-secret defaults for the dev blueprint --------
       - key: ENVIRONMENT
-        value: development
+        value: production
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: SUPABASE_STORAGE_BUCKET
         value: documents
       - key: DISABLE_AUTH
-        value: "true"
-      - key: FORCE_HTTPS
         value: "false"
+      - key: FORCE_HTTPS
+        value: "true"
       - key: BACKEND_CORS_ORIGINS
         value: '["http://localhost:3000","http://localhost:5173"]'
       - key: METRICS_SERVER_ENABLED
