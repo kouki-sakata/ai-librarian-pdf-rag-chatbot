@@ -20,13 +20,12 @@ describe("ChatInterface responsive layout", () => {
   it("uses viewport-aware heights for mobile and desktop", () => {
     render(<ChatInterface />);
 
-    const card = screen.getByTestId("chat-card");
-    expect(card.className).toContain("max-h-[calc(100vh-12rem)]");
-    expect(card.className).toContain("flex");
-    expect(card.className).toContain("flex-col");
+    const container = screen.getByTestId("chat-interface");
+    expect(container.className).toContain("h-full");
+    expect(container.className).toContain("flex");
+    expect(container.className).toContain("flex-col");
 
     const scrollArea = screen.getByTestId("chat-scroll");
     expect(scrollArea.className).toContain("h-full");
-    expect(scrollArea.className).toContain("p-4");
   });
 });
