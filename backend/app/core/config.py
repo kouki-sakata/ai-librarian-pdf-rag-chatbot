@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     SUPABASE_JWT_SECRET: str | None = Field(
         default=None,
-        description="HS256 shared secret (development/testing only). MUST be unset in production.",
+        description="HS256 shared secret. Optional in all environments.",
     )
 
     # Security
@@ -154,6 +154,11 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "SUPABASE_DEV_SERVICE_ROLE_KEY must be set when ENVIRONMENT=development. "
                     "Please set SUPABASE_DEV_SERVICE_ROLE_KEY for development Supabase instance."
+                )
+            if not self.SUPABASE_DEV_PROJECT_REF:
+                raise ValueError(
+                    "SUPABASE_DEV_PROJECT_REF must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_PROJECT_REF for development Supabase instance."
                 )
         return self
 

@@ -14,7 +14,7 @@ env:
   # 開発環境用のローカルSupabase設定
   # ローカル開発時は supabase start で起動したSupabaseを使用
   NEXT_PUBLIC_SUPABASE_DEV_URL: http://127.0.0.1:54321
-  NEXT_PUBLIC_SUPABASE_DEV_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+  NEXT_PUBLIC_SUPABASE_DEV_ANON_KEY: "<YOUR_SUPABASE_ANON_KEY>"
 
 # Explicit commands for blueprint import
 installCommand: npm install --prefix frontend

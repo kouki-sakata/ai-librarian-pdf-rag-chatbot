@@ -32,6 +32,7 @@ supabase/functions/*/.env
 
 .env.docker
 .env.docker.local
+.env.local
 
 
 # Gemini

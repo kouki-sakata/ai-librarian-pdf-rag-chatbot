@@ -134,6 +134,9 @@ NEXT_PUBLIC_SUPABASE_DEV_ANON_KEY=<supabase statusで取得したanonキー>
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
+> [!IMPORTANT] > `vercel.yaml` には機密情報を含めないでください。
+> ローカル開発用のキーは `.env.local` に設定し、`vercel.yaml` の `NEXT_PUBLIC_SUPABASE_DEV_ANON_KEY` はプレースホルダーのままにしてください。
+
 ### 5. データベースのセットアップ
 
 ローカル Supabase を使用する場合、`supabase start`で自動的にマイグレーションが適用されます。
