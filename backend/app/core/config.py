@@ -195,7 +195,7 @@ class Settings(BaseSettings):
                 return self.SUPABASE_URL
             raise ValueError(
                 f"Supabase URL must be set for ENVIRONMENT={env}. "
-                "Please set SUPABASE_URL or SUPABASE_DEV_URL."
+                "Please set SUPABASE_URL."
             )
 
     @property
