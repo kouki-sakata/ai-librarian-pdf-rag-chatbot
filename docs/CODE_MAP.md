@@ -156,16 +156,3 @@ sequenceDiagram
     API-->>FE: JSON Response
     FE-->>U: Display Answer
 ```
-
----
-
-## 🛠️ Tech Stack Details
-
-| Component              | Technology              | Purpose                                       |
-| :--------------------- | :---------------------- | :-------------------------------------------- |
-| **Frontend Framework** | Next.js 16 (App Router) | Server-side rendering, routing, API handling. |
-| **UI Library**         | React 19                | Component-based UI construction.              |
-| **Styling**            | Tailwind CSS            | Utility-first CSS framework.                  |
-| **Backend Framework**  | FastAPI                 | High-performance Python API framework.        |
-| **Package Manager**    | Poetry                  | Python dependency management.                 |
-| **Linting/Formatting** | Biome (FE) / Ruff (BE)  | Code quality and consistency.                 |

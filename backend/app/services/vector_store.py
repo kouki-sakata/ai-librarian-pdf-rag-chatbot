@@ -44,6 +44,11 @@ class VectorStoreService:
                     min_size=2,
                     max_size=10,
                     open=False,
+                    # autocommit True (pool default) would end the transaction right after
+                    # set_config(), so the tenant_id would disappear before subsequent
+                    # statements. Force autocommit=False to keep the transaction open
+                    # while we set app.tenant_id for RLS.
+                    kwargs={"autocommit": False},
                     configure=configure_connection,
                 )
                 await cls._pool.open()
