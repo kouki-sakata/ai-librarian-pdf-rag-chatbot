@@ -13,6 +13,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ## Key Libraries
 
 - UI: Tailwind CSS 4 + shadcn/ui、react-markdown（回答表示）、@supabase/ssr（Server-side Auth）
+- State/Data: TanStack React Query 5 を `QueryProvider` で包み、ドキュメント一覧のキャッシュと削除後の `invalidateQueries(["documents"])` を統一
 - API/Domain: FastAPI, Pydantic v2。チャット生成は LangChain のチェーンは使わず、AsyncOpenAI で直接ストリーミング応答を構築（LangChain は embeddings/text splitter のみ）。
 - Data/Vector: Supabase Postgres + pgvector、Supabase Storage、Supabase Auth JWT（supabase-py で Storage/DB を実接続、psycopg+pgvector で HNSW index を使用しつつ `set_config('app.tenant_id', …)` で RLS を効かせる。`SUPABASE_DB_URL` と bucket/role key が前提）
 - AI: OpenAI SDK（gpt-4o-mini、text-embedding-3-small をデフォルト）
@@ -34,7 +35,9 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 ### Auth & Tenant Context
 
 - FastAPI middleware (`core/middleware.py`) で Supabase JWT を検証（RS256/JWKS + HS256 fallback）。`tenant_id` を contextvars にセットし、RLS 付き DB 操作は `app.tenant_id` を DB session に設定して評価させる
+- `tenant_id` カスタムクレームが無い場合は `sub` をフォールバックとして採用し、匿名ユーザーでもテナント境界を維持
 - API ハンドラ/サービスは context から tenant_id を取得し、Supabase Storage/DB でも同じ tenant 境界を強制
+- HTTPS 強制は `FORCE_HTTPS` に連動し、レスポンスヘッダ (`Strict-Transport-Security`, `X-Frame-Options` 等) をミドルウェアで付与
 
 ### Testing
 
@@ -91,5 +94,8 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 - Observability: ingestion/chat latency と embedding throughput のメトリクスを収集し、閾値越えでアラート
 - OpenTelemetry + Prometheus exporter は `METRICS_SERVER_ENABLED=true` のときのみ 9464 ポートで公開（デフォルト有効だが CI では無効化を推奨）
 - Chat API は AsyncOpenAI のストリームを NDJSON (`token` 連打 → 最終 `metadata`) で返却し、チャット履歴は Supabase テーブルへ記録
+- Document API (`/api/v1/documents`) で一覧・削除・署名付き URL 発行を提供。削除時は vectors テーブルと Storage オブジェクトを先に掃除して整合性を担保
+- VectorStoreService は `AsyncConnectionPool` + `set_config('app.tenant_id', …)` で接続ごとに RLS を適用し、`async_lru` で embedding を1時間キャッシュ
+- 環境変数は `effective_supabase_*` プロパティで環境別に強制し、開発/本番キーの取り違えを防ぐ
 
-updated_at: 2025-11-25
+updated_at: 2025-11-27
