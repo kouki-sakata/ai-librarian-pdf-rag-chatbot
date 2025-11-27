@@ -9,6 +9,7 @@ from jose import jwt
 os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
 os.environ["SUPABASE_DEV_SERVICE_ROLE_KEY"] = "mock-service-role-key"
 os.environ["SUPABASE_DEV_PROJECT_REF"] = "mock-project-ref"
+os.environ["SUPABASE_DEV_DB_URL"] = "postgresql://postgres:postgres@localhost:54322/postgres"
 os.environ["OPENAI_API_KEY"] = "sk-test-key"  # Must not be "mock-key"
 os.environ.setdefault("METRICS_SERVER_ENABLED", "false")
 

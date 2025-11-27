@@ -29,6 +29,9 @@ export function ChatInterface() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
+    // Only scroll if there are messages
+    if (messages.length === 0) return;
+
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector(
         "[data-radix-scroll-area-viewport]"
@@ -51,7 +54,7 @@ export function ChatInterface() {
         }
       }
     }
-  }, []);
+  }, [messages.length]);
 
   useEffect(() => {
     initSession();
