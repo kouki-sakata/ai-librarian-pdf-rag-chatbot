@@ -122,6 +122,7 @@ def _ensure_indexes(cur: psycopg.Cursor) -> None:
 
 def _reload_postgrest(cur: psycopg.Cursor) -> None:
     cur.execute("notify pgrst, 'reload schema';")
+    cur.execute("notify pgrst, 'reload config';")
 
 
 async def ensure_base_schema() -> None:

@@ -3,6 +3,7 @@ from typing import Any
 
 from fastapi import HTTPException, UploadFile, status
 
+from app.core.bootstrap import ensure_base_schema
 from app.core.config import settings
 from app.core.supabase_client import get_supabase_client
 
@@ -34,26 +35,48 @@ class StorageService:
             )
 
         # Insert document record into the database
-        try:
-            client.table("documents").insert(
-                {
-                    "id": doc_id,
-                    "tenant_id": tenant_id,
-                    "filename": filename,
-                    "storage_path": path,
-                    "file_size": len(content),
-                    "content_type": file.content_type or "application/pdf",
-                }
-            ).execute()
-        except Exception as e:
-            # If document insertion fails, clean up the uploaded file
-            client.storage.from_(bucket).remove([path])
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create document record: {str(e)}",
+        def _insert_document() -> Any:
+            return (
+                client.table("documents")
+                .insert(
+                    {
+                        "id": doc_id,
+                        "tenant_id": tenant_id,
+                        "filename": filename,
+                        "storage_path": path,
+                        "file_size": len(content),
+                        "content_type": file.content_type or "application/pdf",
+                    }
+                )
+                .execute()
             )
 
+        try:
+            _insert_document()
+        except Exception as e:  # PostgREST cache or missing table
+            message = str(e)
+            if "PGRST205" in message or "Could not find the table 'public.documents'" in message:
+                # Try to bootstrap schema and reload cache, then retry once
+                await ensure_base_schema()
+                try:
+                    _insert_document()
+                except Exception as retry_err:
+                    client.storage.from_(bucket).remove([path])
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Failed to create document record after bootstrap: {retry_err}",
+                    )
+            else:
+                # If document insertion fails, clean up the uploaded file
+                client.storage.from_(bucket).remove([path])
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to create document record: {str(e)}",
+                )
         return doc_id
+
+        # note: doc_id returned above; keep structure for readability
+        # If document insertion fails, clean up the uploaded file
 
     @staticmethod
     async def download_file(tenant_id: str, path: str) -> bytes:
