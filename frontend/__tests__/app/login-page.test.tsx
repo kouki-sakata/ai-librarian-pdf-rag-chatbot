@@ -48,7 +48,7 @@ describe("LoginPage sign-up flow", () => {
   it("初期表示はログインモードで送信ボタンがログイン", () => {
     renderLoginPage();
 
-    expect(screen.getByTestId("auth-mode-login")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("auth-mode-login")).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("auth-submit")).toHaveTextContent("ログイン");
     expect(screen.queryByTestId("password-confirm")).not.toBeInTheDocument();
   });
