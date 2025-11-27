@@ -19,6 +19,22 @@ const createTestSupabaseClient = (): BrowserSupabaseClient =>
         },
         error: null,
       }),
+      signInWithPassword: async () => ({
+        data: { session: { access_token: "test-access-token" } },
+        error: null,
+      }),
+      signUp: async () => ({
+        data: { session: null },
+        error: null,
+      }),
+      signInAnonymously: async () => ({
+        data: { session: { access_token: "test-access-token" } },
+        error: null,
+      }),
+      signInWithOAuth: async () => ({
+        data: { url: "https://example.com" },
+        error: null,
+      }),
       signOut: async () => ({
         error: null,
       }),
