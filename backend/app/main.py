@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.endpoints import chat, documents, health, upload
+from app.core.bootstrap import ensure_base_schema
 from app.core.config import settings
 from app.core.middleware import AuthMiddleware
 
@@ -40,3 +41,8 @@ FastAPIInstrumentor.instrument_app(app)
 @app.get("/")
 async def root() -> dict[str, str]:
     return {"message": "Welcome to AI Librarian RAG API"}
+
+
+@app.on_event("startup")
+async def bootstrap_schema() -> None:
+    await ensure_base_schema()
