@@ -86,31 +86,30 @@ def _ensure_rls(cur: psycopg.Cursor) -> None:
     cur.execute("alter table chat_messages enable row level security;")
 
     # policies with fallback to app.tenant_id -> metadata tenant_id -> auth.uid()
-    policy_sql = """
-    do $$
-    begin
-      if not exists (
-        select 1 from pg_policies
-        where schemaname = 'public' and tablename = %(table)s and policyname = %(policy)s
-      ) then
-        execute format(
-          'create policy %I on %I for all using (tenant_id = coalesce(
-              current_setting(''app.tenant_id'', true),
-              (auth.jwt() -> ''app_metadata'' ->> ''tenant_id''),
-              auth.uid()::text
-          ));',
-          %(policy)s, %(table)s
-        );
-      end if;
-    end $$;
-    """
-    for table in ("documents", "ingest_jobs", "vectors", "chat_sessions", "chat_messages"):
+    tables = ("documents", "ingest_jobs", "vectors", "chat_sessions", "chat_messages")
+    for table in tables:
+        policy_name = f"Tenant Isolation for {table.replace('_', ' ').title()}"
         cur.execute(
-            policy_sql,
-            {
-                "table": table,
-                "policy": "Tenant Isolation for " + table.replace("_", " ").title(),
-            },
+            f"""
+            do $$
+            begin
+              if not exists (
+                select 1 from pg_policies
+                where schemaname = 'public'
+                  and tablename = '{table}'
+                  and policyname = '{policy_name}'
+              ) then
+                execute $p$
+                  create policy "{policy_name}" on {table} for all
+                  using (tenant_id = coalesce(
+                      current_setting('app.tenant_id', true),
+                      (auth.jwt() -> 'app_metadata' ->> 'tenant_id'),
+                      auth.uid()::text
+                  ));
+                $p$;
+              end if;
+            end $$;
+            """
         )
 
 
