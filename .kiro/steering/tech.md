@@ -38,6 +38,7 @@ Hexagonal 構成。Next.js 16 (React 19, App Router) フロントと FastAPI バ
 - `tenant_id` カスタムクレームが無い場合は `sub` をフォールバックとして採用し、匿名ユーザーでもテナント境界を維持
 - API ハンドラ/サービスは context から tenant_id を取得し、Supabase Storage/DB でも同じ tenant 境界を強制
 - HTTPS 強制は `FORCE_HTTPS` に連動し、レスポンスヘッダ (`Strict-Transport-Security`, `X-Frame-Options` 等) をミドルウェアで付与
+- フロントエンドは Supabase SSR クライアントを dev/prod で分岐（必須変数が無い場合は例外を投げて起動を止める）。OAuth は `(auth)/login` から Google にリダイレクトし、`auth/callback/route.ts` が `exchangeCodeForSession` を実行して session を確立後 `/` にリダイレクトする。`use-chat`/`document-list` では Supabase JWT を取得して API への Bearer として渡す。
 
 ### Testing
 

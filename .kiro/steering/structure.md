@@ -9,8 +9,8 @@ Hexagonal + 二層（frontend / backend）。UI は App Router で機能ごと�
 ### Frontend (Next.js 16)
 
 **Location**: `/frontend/`
-**Purpose**: アップロード/チャット UI とストリーミング表示。App Router 直下の `frontend/app/page.tsx` にアップロードフォームとチャット UI を並置し、認証は `frontend/app/login`（メール/パスワード + 匿名ログイン）と `frontend/app/auth/callback`（Supabase OAuth code exchange）で処理。UI パーツは `frontend/components/ui`（shadcn ベースのデザインシステム）と `frontend/components/*.tsx`（機能固有）へ分割。
-**Supporting Modules**: 共通ロジックは `frontend/hooks`（`use-chat.ts` がチャットセッション初期化と NDJSON ストリーム処理を担当）、ユーティリティは `frontend/lib`（`supabase/client.ts` と `supabase/server.ts` で Browser/Server クライアントを分離）、状態補助は `frontend/contexts`、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。`frontend/app/layout.tsx` で `QueryProvider`（TanStack React Query）と `SessionProvider` を包み、`AppSidebar` がチャット履歴タブ（`HistorySidebarContent`）とドキュメントタブ（`DocumentList`）を切り替える。ドキュメント一覧は React Query でキャッシュし、削除時に invalidate する。
+**Purpose**: アップロード/チャット UI とストリーミング表示。App Router は route group で分割し、認証フローは `(auth)/login`（メール/パスワード + 匿名 + Google OAuth）と `auth/callback/route.ts`（Supabase の `exchangeCodeForSession` を叩く Route Handler）に集約。メイン画面は `(main)/page.tsx` でアップロードフォームとチャット UI を並置する。
+**Supporting Modules**: 共通ロジックは `frontend/hooks`（`use-chat.ts` がチャットセッション初期化と NDJSON ストリーム処理を担当）、ユーティリティは `frontend/lib`（`supabase/client.ts` と `supabase/server.ts` で Browser/Server クライアントを分離し、dev/prod 環境変数を明示的に検証）、状態補助は `frontend/contexts`、型は `frontend/types`（`api.ts` は自動生成）に集約。`__tests__` で Vitest/Testing Library による UI テストを保持。`frontend/app/layout.tsx` で `QueryProvider`（TanStack React Query）と `SessionProvider` を包み、`(main)/layout.tsx` が `SidebarProvider` + `AppSidebar` を介したモバイル向けサイドバー切替を提供。ドキュメント一覧は React Query でキャッシュし、削除時に invalidate する。
 **Path Alias**: `@/*` → `frontend/` ルート配下。
 
 ### Backend (FastAPI)
