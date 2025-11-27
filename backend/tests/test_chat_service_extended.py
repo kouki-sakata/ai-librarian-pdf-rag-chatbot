@@ -58,6 +58,7 @@ async def test_chat_service_with_citations():
         patch("app.services.chat.RetrieverService") as MockRetriever,
         patch("app.services.chat.AsyncOpenAI") as MockOpenAI,
         patch("app.services.chat.HistoryService") as MockHistory,
+        patch("app.services.chat.get_supabase_client") as MockSupabaseClient,
     ):
         # Setup Mocks
         mock_retriever = MockRetriever.return_value
@@ -80,6 +81,13 @@ async def test_chat_service_with_citations():
 
         mock_history = MockHistory.return_value
         mock_history.add_message = AsyncMock()
+
+        # Mock Supabase Client
+        mock_supabase = MockSupabaseClient.return_value
+        mock_supabase.table.return_value.select.return_value.in_.return_value.execute.return_value.data = [
+            {"id": "doc1", "filename": "file1.pdf"},
+            {"id": "doc2", "filename": "file2.pdf"},
+        ]
 
         # Mock OpenAI Stream
         mock_openai = MockOpenAI.return_value
