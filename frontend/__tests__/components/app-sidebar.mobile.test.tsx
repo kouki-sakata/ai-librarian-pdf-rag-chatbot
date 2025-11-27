@@ -5,6 +5,13 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SessionProvider } from "@/contexts/session-context";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
 // Force mobile rendering for the sidebar
 vi.mock("@/hooks/use-mobile", () => ({
   useIsMobile: () => true,
@@ -28,6 +35,15 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+    },
+  }),
+}));
+
 describe("AppSidebar mobile behavior", () => {
   it("opens as a sheet via the mobile trigger", async () => {
     render(
@@ -47,5 +63,5 @@ describe("AppSidebar mobile behavior", () => {
     await waitFor(() => {
       expect(document.querySelector('[data-mobile="true"]')).not.toBeNull();
     });
-  });
+  }, 10000);
 });

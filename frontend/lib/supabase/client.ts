@@ -13,6 +13,15 @@ const createTestSupabaseClient = (): BrowserSupabaseClient =>
         },
         error: null,
       }),
+      getUser: async () => ({
+        data: {
+          user: null,
+        },
+        error: null,
+      }),
+      signOut: async () => ({
+        error: null,
+      }),
     },
   }) as BrowserSupabaseClient;
 

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home from "../../app/page";
+import Home from "../../app/(main)/page";
 
 // Mock child components
 vi.mock("@/components/chat-interface", () => ({

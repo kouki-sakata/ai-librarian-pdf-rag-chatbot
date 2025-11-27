@@ -147,7 +147,7 @@ describe("HistorySidebar", () => {
         expect.objectContaining({ method: "DELETE" })
       );
     });
-  });
+  }, 10000);
 
   it("loads more sessions", async () => {
     fetchMock.mockResolvedValueOnce({

@@ -1,13 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import Home from "@/app/page";
+import Home from "@/app/(main)/page";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SessionProvider } from "@/contexts/session-context";
 
 vi.mock("next/font/google", () => ({
   Geist: () => ({ className: "font-geist", variable: "--font-geist" }),
-  Geist_Mono: () => ({ className: "font-geist-mono", variable: "--font-geist-mono" }),
+  Geist_Mono: () => ({
+    className: "font-geist-mono",
+    variable: "--font-geist-mono",
+  }),
 }));
 
 vi.mock("@/components/app-sidebar", () => ({
