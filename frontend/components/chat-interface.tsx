@@ -39,7 +39,9 @@ export function ChatInterface() {
         if (canSmoothScroll) {
           // JSdom環境ではscrollToが未実装のため存在チェックを行う
           (
-            scrollContainer as HTMLElement & { scrollTo: (options: ScrollToOptions) => void }
+            scrollContainer as HTMLElement & {
+              scrollTo: (options: ScrollToOptions) => void;
+            }
           ).scrollTo({
             top: scrollContainer.scrollHeight,
             behavior: "smooth",

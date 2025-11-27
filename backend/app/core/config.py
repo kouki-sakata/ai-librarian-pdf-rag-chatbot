@@ -25,7 +25,10 @@ class Settings(BaseSettings):
         default=None,
         description="Supabase service role key (required when ENVIRONMENT=production)",
     )
-    SUPABASE_DB_URL: str | None = None  # Postgres connection string (for pgvector)
+    SUPABASE_DB_URL: str | None = Field(
+        default=None,
+        description="Production Supabase DB URL (required when ENVIRONMENT=production for pgvector)",
+    )
     SUPABASE_STORAGE_BUCKET: str = "documents"
 
     # 開発環境用のローカルSupabase設定（ENVIRONMENT=development の時に使用）
@@ -43,7 +46,7 @@ class Settings(BaseSettings):
     )
     SUPABASE_DEV_DB_URL: str | None = Field(
         default=None,
-        description="Development Supabase DB URL (optional when ENVIRONMENT=development)",
+        description="Development Supabase DB URL (required when ENVIRONMENT=development for pgvector)",
     )
 
     SUPABASE_JWT_SECRET: str | None = Field(
@@ -143,6 +146,11 @@ class Settings(BaseSettings):
                     "SUPABASE_SERVICE_ROLE_KEY must be set when ENVIRONMENT=production. "
                     "Please set SUPABASE_SERVICE_ROLE_KEY for production Supabase instance."
                 )
+            if not self.SUPABASE_DB_URL:
+                raise ValueError(
+                    "SUPABASE_DB_URL must be set when ENVIRONMENT=production. "
+                    "Please set SUPABASE_DB_URL with the Postgres connection string for pgvector."
+                )
         elif env == "development":
             # 開発環境では開発用の環境変数が必須
             if not self.SUPABASE_DEV_URL:
@@ -159,6 +167,11 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "SUPABASE_DEV_PROJECT_REF must be set when ENVIRONMENT=development. "
                     "Please set SUPABASE_DEV_PROJECT_REF for development Supabase instance."
+                )
+            if not self.SUPABASE_DEV_DB_URL:
+                raise ValueError(
+                    "SUPABASE_DEV_DB_URL must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_DB_URL with the Postgres connection string for pgvector."
                 )
         return self
 
