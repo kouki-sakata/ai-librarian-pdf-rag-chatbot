@@ -125,6 +125,22 @@ class Settings(BaseSettings):
             )
         return v
 
+    @field_validator("SUPABASE_DB_URL", "SUPABASE_DEV_DB_URL")
+    @classmethod
+    def validate_db_url(cls, v: str | None, info: ValidationInfo) -> str | None:
+        """
+        Ensure Supabase DB URL is a full postgres connection string.
+        This prevents misconfiguration like supplying only the host without scheme/password.
+        """
+        if v is None:
+            return v
+        if "://" not in v or not v.startswith(("postgres://", "postgresql://")):
+            raise ValueError(
+                f"{info.field_name} must be a full Postgres connection string "
+                "(e.g., postgres://user:password@host:port/dbname). Current value is invalid."
+            )
+        return v
+
     @model_validator(mode="after")
     def validate_environment_supabase_settings(self) -> "Settings":
         """Validate environment-specific Supabase settings after all fields are loaded."""
