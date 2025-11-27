@@ -4,6 +4,7 @@ import {
   AlertCircle,
   CheckCircle,
   File as FileIcon,
+  Info,
   Loader2,
   RefreshCw,
   Upload,
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getUploadErrorMessage } from "@/lib/error-messages";
 import { createClient } from "@/lib/supabase/client";
 import { UploadResponse } from "@/types";
@@ -152,7 +154,26 @@ export function UploadForm() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>ドキュメントアップロード</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>ドキュメントアップロード</CardTitle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="プライバシー情報"
+              >
+                <Info className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="font-semibold mb-1">🔒 プライバシー保護</p>
+              <p className="text-xs">
+                アップロードされたファイルはあなた専用です。他のユーザーと情報が共有されることはありません。
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
         <CardDescription>
           PDFファイルをアップロードして、AIに質問しましょう (最大 50MB)
         </CardDescription>
