@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createClient } from "@/lib/supabase/client";
 
 interface Document {
   id: string;
@@ -36,17 +37,35 @@ function formatDate(dateString: string): string {
   });
 }
 
+const getAuthToken = async (): Promise<string | null> => {
+  try {
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  } catch (error) {
+    console.error("Failed to get Supabase session:", error);
+    return null;
+  }
+};
+
 const fetchDocuments = async (): Promise<Document[]> => {
+  const token = await getAuthToken();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const res = await fetch(`${apiUrl}/api/v1/documents?sort=created_at&order=desc`);
+  const res = await fetch(`${apiUrl}/api/v1/documents?sort=created_at&order=desc`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
   if (!res.ok) throw new Error("Failed to fetch documents");
   return res.json();
 };
 
 const deleteDocument = async (id: string): Promise<void> => {
+  const token = await getAuthToken();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const res = await fetch(`${apiUrl}/api/v1/documents/${id}`, {
     method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error("Failed to delete document");
 };

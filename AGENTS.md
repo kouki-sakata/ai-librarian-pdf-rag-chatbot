@@ -82,3 +82,31 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 - Fetch current library documentation through Context7 prior to coding, then confirm assumptions inside the spec tasks.
 - Conduct internal reasoning in English but deliver repository communications in Japanese, matching the project convention.
   When a shell command fails with “failed in sandbox”, use the permission request tool (with `with_escalated_permissions`) to ask the user for approval before retrying.
+
+  ## TypeScript
+
+- Only create an abstraction if it’s actually needed
+- Prefer clear function/variable names over inline comments
+- Avoid helper functions when a simple inline expression would suffice
+- Use `knip` to remove unused code if making large changes
+- The `gh` CLI is installed, use it
+- Don’t unnecessarily add `try`/`catch`
+- Don’t cast to `any`
+
+## React
+
+- Avoid massive JSX blocks and compose smaller components
+- Colocate code that changes together
+- Avoid `useEffect` unless absolutely needed
+
+## Tailwind
+
+- Mostly use built-in values, occasionally allow dynamic values, rarely globals
+- Always use v4 + global CSS file format + shadcn/ui
+
+## Next
+
+- Prefer fetching data in RSC (page can still be static)
+- Use next/font + next/script when applicable
+- next/image above the fold should have `sync` / `eager` / use `priority` sparingly
+- Be mindful of serialized prop size for RSC → child components

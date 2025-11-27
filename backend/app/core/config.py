@@ -1,6 +1,6 @@
 import os
 
-from pydantic import Field, ValidationInfo, field_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,18 +12,47 @@ class Settings(BaseSettings):
     )
 
     # Supabase Settings
-    SUPABASE_URL: str
-    SUPABASE_PROJECT_REF: str  # Used for JWKS URL construction
+    # 本番環境用（ENVIRONMENT=production の時に使用）
+    SUPABASE_URL: str | None = Field(
+        default=None,
+        description="Production Supabase URL (required when ENVIRONMENT=production)",
+    )
+    SUPABASE_PROJECT_REF: str | None = Field(
+        default=None,
+        description="Production Supabase project ref (required when ENVIRONMENT=production)",
+    )
+    SUPABASE_SERVICE_ROLE_KEY: str | None = Field(
+        default=None,
+        description="Supabase service role key (required when ENVIRONMENT=production)",
+    )
+    SUPABASE_DB_URL: str | None = Field(
+        default=None,
+        description="Production Supabase DB URL (required when ENVIRONMENT=production for pgvector)",
+    )
+    SUPABASE_STORAGE_BUCKET: str = "documents"
+
+    # 開発環境用のローカルSupabase設定（ENVIRONMENT=development の時に使用）
+    SUPABASE_DEV_URL: str | None = Field(
+        default="http://127.0.0.1:54321",
+        description="Development Supabase URL (required when ENVIRONMENT=development). Defaults to http://127.0.0.1:54321 for local Supabase",
+    )
+    SUPABASE_DEV_PROJECT_REF: str | None = Field(
+        default=None,
+        description="Development Supabase project ref (required when ENVIRONMENT=development)",
+    )
+    SUPABASE_DEV_SERVICE_ROLE_KEY: str | None = Field(
+        default=None,
+        description="Development Supabase service role key (required when ENVIRONMENT=development)",
+    )
+    SUPABASE_DEV_DB_URL: str | None = Field(
+        default=None,
+        description="Development Supabase DB URL (required when ENVIRONMENT=development for pgvector)",
+    )
+
     SUPABASE_JWT_SECRET: str | None = Field(
         default=None,
-        description="HS256 shared secret (development/testing only). MUST be unset in production.",
+        description="HS256 shared secret. Optional in all environments.",
     )
-    SUPABASE_SERVICE_ROLE_KEY: str = Field(
-        ...,
-        description="Needed for backend operations bypassing RLS or for admin tasks",
-    )
-    SUPABASE_DB_URL: str | None = None  # Postgres connection string (for pgvector)
-    SUPABASE_STORAGE_BUCKET: str = "documents"
 
     # Security
     FORCE_HTTPS: bool = Field(
@@ -85,17 +114,66 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    @field_validator("SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY")
+    @field_validator("OPENAI_API_KEY")
     @classmethod
-    def validate_required_keys(cls, v: str, info: ValidationInfo) -> str:
-        """Ensure required API keys are set and not mock values."""
-        field_name = info.field_name
+    def validate_openai_key(cls, v: str, info: ValidationInfo) -> str:
+        """Ensure OpenAI API key is set and not mock values."""
         if not v or v == "mock-key":
             raise ValueError(
-                f"{field_name} must be set in environment variables. "
-                f"Please set the {field_name} environment variable with a valid value."
+                "OPENAI_API_KEY must be set in environment variables. "
+                "Please set the OPENAI_API_KEY environment variable with a valid value."
             )
         return v
+
+    @model_validator(mode="after")
+    def validate_environment_supabase_settings(self) -> "Settings":
+        """Validate environment-specific Supabase settings after all fields are loaded."""
+        env = self.ENVIRONMENT.lower()
+        if env == "production":
+            # 本番環境では本番用の環境変数が必須
+            if not self.SUPABASE_URL:
+                raise ValueError(
+                    "SUPABASE_URL must be set when ENVIRONMENT=production. "
+                    "Please set SUPABASE_URL for production Supabase instance."
+                )
+            if not self.SUPABASE_PROJECT_REF:
+                raise ValueError(
+                    "SUPABASE_PROJECT_REF must be set when ENVIRONMENT=production. "
+                    "Please set SUPABASE_PROJECT_REF for production Supabase instance."
+                )
+            if not self.SUPABASE_SERVICE_ROLE_KEY:
+                raise ValueError(
+                    "SUPABASE_SERVICE_ROLE_KEY must be set when ENVIRONMENT=production. "
+                    "Please set SUPABASE_SERVICE_ROLE_KEY for production Supabase instance."
+                )
+            if not self.SUPABASE_DB_URL:
+                raise ValueError(
+                    "SUPABASE_DB_URL must be set when ENVIRONMENT=production. "
+                    "Please set SUPABASE_DB_URL with the Postgres connection string for pgvector."
+                )
+        elif env == "development":
+            # 開発環境では開発用の環境変数が必須
+            if not self.SUPABASE_DEV_URL:
+                raise ValueError(
+                    "SUPABASE_DEV_URL must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_URL (usually http://127.0.0.1:54321 for local Supabase)."
+                )
+            if not self.SUPABASE_DEV_SERVICE_ROLE_KEY:
+                raise ValueError(
+                    "SUPABASE_DEV_SERVICE_ROLE_KEY must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_SERVICE_ROLE_KEY for development Supabase instance."
+                )
+            if not self.SUPABASE_DEV_PROJECT_REF:
+                raise ValueError(
+                    "SUPABASE_DEV_PROJECT_REF must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_PROJECT_REF for development Supabase instance."
+                )
+            if not self.SUPABASE_DEV_DB_URL:
+                raise ValueError(
+                    "SUPABASE_DEV_DB_URL must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_DB_URL with the Postgres connection string for pgvector."
+                )
+        return self
 
     @field_validator("SUPABASE_JWT_SECRET")
     @classmethod
@@ -110,6 +188,62 @@ class Settings(BaseSettings):
         if v == "":
             raise ValueError("SUPABASE_JWT_SECRET must be a non-empty string or omitted")
         return v
+
+    @property
+    def effective_supabase_url(self) -> str:
+        """環境に応じてSupabase URLを返す"""
+        env = self.ENVIRONMENT.lower()
+        if env == "development":
+            if not self.SUPABASE_DEV_URL:
+                raise ValueError(
+                    "SUPABASE_DEV_URL must be set when ENVIRONMENT=development. "
+                    "Please set SUPABASE_DEV_URL for development Supabase instance."
+                )
+            return self.SUPABASE_DEV_URL
+        elif env == "production":
+            if not self.SUPABASE_URL:
+                raise ValueError(
+                    "SUPABASE_URL must be set when ENVIRONMENT=production. "
+                    "Please set SUPABASE_URL for production Supabase instance."
+                )
+            return self.SUPABASE_URL
+        else:
+            # staging などの他の環境
+            if self.SUPABASE_URL:
+                return self.SUPABASE_URL
+            raise ValueError(
+                f"Supabase URL must be set for ENVIRONMENT={env}. Please set SUPABASE_URL."
+            )
+
+    @property
+    def effective_supabase_service_role_key(self) -> str:
+        """環境に応じてSupabase Service Role Keyを返す"""
+        env = self.ENVIRONMENT.lower()
+        if env == "development":
+            if not self.SUPABASE_DEV_SERVICE_ROLE_KEY:
+                raise ValueError(
+                    "SUPABASE_DEV_SERVICE_ROLE_KEY must be set when ENVIRONMENT=development."
+                )
+            return self.SUPABASE_DEV_SERVICE_ROLE_KEY
+        elif env == "production":
+            if not self.SUPABASE_SERVICE_ROLE_KEY:
+                raise ValueError(
+                    "SUPABASE_SERVICE_ROLE_KEY must be set when ENVIRONMENT=production."
+                )
+            return self.SUPABASE_SERVICE_ROLE_KEY
+        else:
+            # staging などの他の環境
+            if self.SUPABASE_SERVICE_ROLE_KEY:
+                return self.SUPABASE_SERVICE_ROLE_KEY
+            raise ValueError(f"Supabase Service Role Key must be set for ENVIRONMENT={env}.")
+
+    @property
+    def effective_supabase_db_url(self) -> str | None:
+        """環境に応じてSupabase DB URLを返す"""
+        env = self.ENVIRONMENT.lower()
+        if env == "development":
+            return self.SUPABASE_DEV_DB_URL
+        return self.SUPABASE_DB_URL
 
 
 settings = Settings()

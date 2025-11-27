@@ -21,11 +21,12 @@ describe("ChatInterface responsive layout", () => {
     render(<ChatInterface />);
 
     const card = screen.getByTestId("chat-card");
-    expect(card.className).toContain("h-[70vh]");
-    expect(card.className).toContain("lg:h-[calc(100vh-8rem)]");
+    expect(card.className).toContain("max-h-[calc(100vh-12rem)]");
+    expect(card.className).toContain("flex");
+    expect(card.className).toContain("flex-col");
 
     const scrollArea = screen.getByTestId("chat-scroll");
-    expect(scrollArea.className).toContain("flex-1");
-    expect(scrollArea.className).toContain("min-h-0");
+    expect(scrollArea.className).toContain("h-full");
+    expect(scrollArea.className).toContain("p-4");
   });
 });

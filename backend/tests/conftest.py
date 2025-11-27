@@ -5,15 +5,19 @@ import pytest
 from fastapi.testclient import TestClient
 from jose import jwt
 
+# Set environment variables BEFORE importing app.core.config to pass Settings validation
+os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
+os.environ["SUPABASE_DEV_SERVICE_ROLE_KEY"] = "mock-service-role-key"
+os.environ["SUPABASE_DEV_PROJECT_REF"] = "mock-project-ref"
+os.environ["SUPABASE_DEV_DB_URL"] = "postgresql://postgres:postgres@localhost:54322/postgres"
+os.environ["OPENAI_API_KEY"] = "sk-test-key"  # Must not be "mock-key"
+os.environ.setdefault("METRICS_SERVER_ENABLED", "false")
+
 from app.core.config import settings
 from app.main import app
 
-# Ensure test secret is set
-os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
+# Ensure settings are updated if they were already loaded (though import should trigger first load with above env vars)
 settings.SUPABASE_JWT_SECRET = "test-secret"
-
-# Disable Prometheus HTTP server during tests to avoid bind failures in sandboxed CI
-os.environ.setdefault("METRICS_SERVER_ENABLED", "false")
 settings.METRICS_SERVER_ENABLED = False
 
 

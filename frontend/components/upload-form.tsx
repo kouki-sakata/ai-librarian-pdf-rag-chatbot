@@ -1,15 +1,23 @@
 "use client";
 
-import { AlertCircle, CheckCircle, File, Loader2, RefreshCw, Upload } from "lucide-react";
-import { useState } from "react";
+import {
+  AlertCircle,
+  CheckCircle,
+  File as FileIcon,
+  Loader2,
+  RefreshCw,
+  Upload,
+  X,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { getUploadErrorMessage } from "@/lib/error-messages";
+import { createClient } from "@/lib/supabase/client";
 import { UploadResponse } from "@/types";
 
 export function UploadForm() {
@@ -18,6 +26,7 @@ export function UploadForm() {
   const [progress, setProgress] = useState(0);
   const [docId, setDocId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -25,6 +34,16 @@ export function UploadForm() {
       setDocId(null);
       setProgress(0);
       setError(null);
+    }
+  };
+
+  const handleClearFile = () => {
+    setFile(null);
+    setDocId(null);
+    setProgress(0);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -42,7 +61,7 @@ export function UploadForm() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 30000); // 30 seconds timeout
+    }, 120000); // 120 seconds timeout (2 minutes)
 
     // Declare interval outside try block so it can be cleaned up in finally
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -59,11 +78,24 @@ export function UploadForm() {
         });
       }, 100);
 
+      // Supabaseセッションからアクセストークンを取得
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("認証が必要です。ログインしてください。");
+      }
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const res = await fetch(`${apiUrl}/api/v1/upload/`, {
         method: "POST",
         body: formData,
         signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (!res.ok) {
@@ -85,7 +117,7 @@ export function UploadForm() {
 
       // Check if it's an AbortError (timeout)
       if (error instanceof DOMException && error.name === "AbortError") {
-        errorMessage = "アップロードがタイムアウトしました（30秒）。もう一度お試しください。";
+        errorMessage = "アップロードがタイムアウトしました（2分）。もう一度お試しください。";
       } else {
         errorMessage = getUploadErrorMessage(error);
       }
@@ -127,24 +159,50 @@ export function UploadForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
+          <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="pdf">PDFファイル</Label>
-            <Input
+            {/* 隠しファイルインプット */}
+            <input
+              ref={fileInputRef}
               id="pdf"
               type="file"
               accept="application/pdf"
               onChange={handleFileChange}
               disabled={isUploading}
+              className="sr-only"
             />
-          </div>
 
-          {file && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <File className="h-4 w-4" />
-              <span className="truncate">{file.name}</span>
-              <span className="ml-auto">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-            </div>
-          )}
+            {file ? (
+              /* ファイル選択済みの表示 */
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+                <FileIcon className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearFile}
+                  disabled={isUploading}
+                  className="p-1 rounded-full hover:bg-muted transition-colors disabled:opacity-50"
+                  aria-label="ファイルを削除"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              /* ファイル未選択時のドロップエリア */
+              <label
+                htmlFor="pdf"
+                className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer"
+              >
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">クリックしてPDFを選択</span>
+              </label>
+            )}
+          </div>
 
           {error && (
             <Alert variant="destructive">

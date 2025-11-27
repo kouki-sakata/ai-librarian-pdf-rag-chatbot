@@ -81,10 +81,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 app_metadata = payload.get("app_metadata", {})
                 tenant_id = app_metadata.get("tenant_id")
 
+            # tenant_idが見つからない場合、sub（ユーザーID）をtenant_idとして使用
+            # これにより、匿名ユーザーやtenant_idが設定されていないユーザーでも
+            # ユーザーごとにデータを分離できる
+            if not tenant_id:
+                tenant_id = payload.get("sub")
+
             if not tenant_id:
                 return JSONResponse(
                     status_code=401,
-                    content={"detail": "Missing tenant_id in token claims"},
+                    content={"detail": "Missing tenant_id or sub in token claims"},
                 )
 
             # Set tenant_id in context

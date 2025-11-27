@@ -9,8 +9,8 @@ from app.core.supabase_client import get_supabase_client
 def mock_settings():
     """Mock settings for Supabase configuration"""
     with patch("app.core.supabase_client.settings") as mock:
-        mock.SUPABASE_URL = "https://test-project.supabase.co"
-        mock.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key"
+        mock.effective_supabase_url = "https://test-project.supabase.co"
+        mock.effective_supabase_service_role_key = "test-service-role-key"
         yield mock
 
 
@@ -59,8 +59,8 @@ def test_get_supabase_client_caching(mock_settings):
 
 
 def test_get_supabase_client_missing_url(mock_settings):
-    """Test error when SUPABASE_URL is not configured"""
-    mock_settings.SUPABASE_URL = None
+    """Test error when effective_supabase_url is not configured"""
+    mock_settings.effective_supabase_url = None
 
     with pytest.raises(RuntimeError) as exc_info:
         get_supabase_client()
@@ -69,8 +69,8 @@ def test_get_supabase_client_missing_url(mock_settings):
 
 
 def test_get_supabase_client_missing_key(mock_settings):
-    """Test error when SUPABASE_SERVICE_ROLE_KEY is not configured"""
-    mock_settings.SUPABASE_SERVICE_ROLE_KEY = None
+    """Test error when effective_supabase_service_role_key is not configured"""
+    mock_settings.effective_supabase_service_role_key = None
 
     with pytest.raises(RuntimeError) as exc_info:
         get_supabase_client()
@@ -79,8 +79,8 @@ def test_get_supabase_client_missing_key(mock_settings):
 
 
 def test_get_supabase_client_empty_url(mock_settings):
-    """Test error when SUPABASE_URL is empty string"""
-    mock_settings.SUPABASE_URL = ""
+    """Test error when effective_supabase_url is empty string"""
+    mock_settings.effective_supabase_url = ""
 
     with pytest.raises(RuntimeError) as exc_info:
         get_supabase_client()
@@ -89,8 +89,8 @@ def test_get_supabase_client_empty_url(mock_settings):
 
 
 def test_get_supabase_client_empty_key(mock_settings):
-    """Test error when SUPABASE_SERVICE_ROLE_KEY is empty string"""
-    mock_settings.SUPABASE_SERVICE_ROLE_KEY = ""
+    """Test error when effective_supabase_service_role_key is empty string"""
+    mock_settings.effective_supabase_service_role_key = ""
 
     with pytest.raises(RuntimeError) as exc_info:
         get_supabase_client()
@@ -104,8 +104,8 @@ def test_get_supabase_client_cache_independence():
     from supabase import Client
 
     with patch("app.core.supabase_client.settings") as mock_settings:
-        mock_settings.SUPABASE_URL = "https://new-project.supabase.co"
-        mock_settings.SUPABASE_SERVICE_ROLE_KEY = "new-key"
+        mock_settings.effective_supabase_url = "https://new-project.supabase.co"
+        mock_settings.effective_supabase_service_role_key = "new-key"
 
         with patch("supabase.create_client") as mock_create:
             mock_client = MagicMock(spec=Client)

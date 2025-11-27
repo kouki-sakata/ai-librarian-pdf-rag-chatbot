@@ -60,14 +60,14 @@ export const ChatMessage = memo(function ChatMessage({
     <div className={cn("flex w-full mb-4", role === "user" ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] rounded-lg px-4 py-2 text-sm",
+          "max-w-[85%] rounded-xl px-4 py-3",
           role === "user"
             ? "bg-primary text-primary-foreground"
-            : "bg-muted text-foreground border border-border"
+            : "bg-muted/80 text-foreground border border-border/50"
         )}
       >
         {role === "assistant" ? (
-          <div className="prose dark:prose-invert prose-sm max-w-none break-words">
+          <div className="prose dark:prose-invert prose-base max-w-none break-words leading-relaxed">
             {isEmptyResult ? (
               <div className="flex items-start gap-2 text-foreground">
                 <AlertCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -84,9 +84,9 @@ export const ChatMessage = memo(function ChatMessage({
               </ReactMarkdown>
             )}
             {citations && citations.length > 0 && (
-              <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                <div className="font-semibold text-foreground">出典</div>
-                <ul className="list-disc list-inside space-y-0.5">
+              <div className="mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground space-y-1.5">
+                <div className="font-semibold text-foreground/80">出典</div>
+                <ul className="space-y-1">
                   {citations.map((c, idx) => (
                     <li key={`${c.source}-${idx}`} className="flex items-center gap-1">
                       {c.doc_id ? (
@@ -143,7 +143,7 @@ export const ChatMessage = memo(function ChatMessage({
             )}
           </div>
         ) : (
-          <div className="whitespace-pre-wrap break-words">{content}</div>
+          <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">{content}</div>
         )}
       </div>
     </div>
