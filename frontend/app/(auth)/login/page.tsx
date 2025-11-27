@@ -216,12 +216,13 @@ function LoginForm() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-2 gap-2" role="tablist">
+      <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="認証モード">
         <Button
           type="button"
           data-testid="auth-mode-login"
           variant={mode === "login" ? "default" : "outline"}
-          aria-pressed={mode === "login"}
+          role="tab"
+          aria-selected={mode === "login"}
           onClick={() => {
             setMode("login");
             resetForm();
@@ -234,7 +235,8 @@ function LoginForm() {
           type="button"
           data-testid="auth-mode-signup"
           variant={mode === "signup" ? "default" : "outline"}
-          aria-pressed={mode === "signup"}
+          role="tab"
+          aria-selected={mode === "signup"}
           onClick={() => {
             setMode("signup");
             resetForm();
