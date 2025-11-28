@@ -170,7 +170,7 @@ export function ChatInterface() {
         <ScrollArea data-testid="chat-scroll" className="h-full" ref={scrollAreaRef}>
           <div className="flex flex-col min-h-full pb-32">
             {messages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 mt-20">
+              <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8">
                 <div className="text-2xl font-semibold mb-4 text-foreground">AI司書へようこそ</div>
                 <p className="mb-8">ドキュメントについて何でも聞いてください!</p>
                 <SuggestedQueries onSelect={(query) => setInput(query)} />
