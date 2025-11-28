@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { getChatErrorMessage } from "@/lib/error-messages";
+import { getChatError } from "@/lib/error-messages";
+import { showError } from "@/lib/feedback";
 import { createClient } from "@/lib/supabase/client";
 import type {
   ChatSessionResponse,
@@ -70,11 +70,9 @@ export function useChat() {
         throw new Error("Session initialization failed");
       }
     } catch (error) {
-      const errorMessage = getChatErrorMessage(error, "session");
-      setSessionError(errorMessage);
-      toast.error("セッション初期化失敗", {
-        description: errorMessage,
-      });
+      const errorDetail = getChatError(error, "session");
+      setSessionError(errorDetail.description);
+      showError(errorDetail, errorDetail.canRetry ? () => void initSession() : undefined);
     } finally {
       setIsInitializingSession(false);
     }
@@ -110,7 +108,8 @@ export function useChat() {
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        throw new Error(getChatErrorMessage(res, "message"));
+        const errorDetail = getChatError(res, "message");
+        throw new Error(`${errorDetail.title}: ${errorDetail.description}`);
       }
       if (!res.body) throw new Error("No response body");
 
@@ -201,29 +200,19 @@ export function useChat() {
     } catch (error) {
       clearTimeout(timeoutId);
 
-      let errorMessage: string;
-
-      // Check if it's an AbortError (timeout)
-      if (error instanceof DOMException && error.name === "AbortError") {
-        errorMessage = "リクエストがタイムアウトしました（30秒）。もう一度お試しください。";
-      } else {
-        errorMessage = getChatErrorMessage(error, "message");
-      }
+      const errorDetail = getChatError(error, "message");
 
       // Add error message to chat
       const errorMsg: Message = {
         id: Date.now().toString(),
         role: "error",
-        content: errorMessage,
-        canRetry: true,
+        content: `${errorDetail.title}: ${errorDetail.description}`,
+        canRetry: errorDetail.canRetry,
         originalQuery: query,
       };
       setMessages((prev) => [...prev, errorMsg]);
 
-      toast.error("メッセージ送信失敗", {
-        description: errorMessage,
-        duration: 3000,
-      });
+      showError(errorDetail, errorDetail.canRetry ? () => void sendMessage(query) : undefined);
     } finally {
       setIsLoading(false);
     }

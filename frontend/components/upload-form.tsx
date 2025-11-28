@@ -11,14 +11,14 @@ import {
   X,
 } from "lucide-react";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { getUploadErrorMessage } from "@/lib/error-messages";
+import { getUploadError } from "@/lib/error-messages";
+import { showError, showSuccess } from "@/lib/feedback";
 import { createClient } from "@/lib/supabase/client";
 import { UploadResponse } from "@/types";
 
@@ -102,7 +102,7 @@ export function UploadForm() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        const errorMessage = errorData.detail || getUploadErrorMessage(res);
+        const errorMessage = errorData.detail || getUploadError(res).description;
         throw new Error(errorMessage);
       }
 
@@ -110,26 +110,15 @@ export function UploadForm() {
       setDocId(data.doc_id);
       setProgress(100);
 
-      toast.success("アップロード完了", {
+      showSuccess({
+        title: "アップロード完了",
         description: `${data.filename} の処理が完了しました`,
         duration: 2000,
       });
     } catch (error) {
-      let errorMessage: string;
-
-      // Check if it's an AbortError (timeout)
-      if (error instanceof DOMException && error.name === "AbortError") {
-        errorMessage = "アップロードがタイムアウトしました（2分）。もう一度お試しください。";
-      } else {
-        errorMessage = getUploadErrorMessage(error);
-      }
-
-      setError(errorMessage);
-
-      toast.error("アップロード失敗", {
-        description: errorMessage,
-        duration: 3000,
-      });
+      const errorDetail = getUploadError(error);
+      setError(`${errorDetail.title}: ${errorDetail.description}`);
+      showError(errorDetail, handleRetry);
     } finally {
       // Clean up both timers in finally block to ensure cleanup happens always
       clearTimeout(timeoutId);
@@ -152,7 +141,7 @@ export function UploadForm() {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full depth-2">
       <CardHeader>
         <div className="flex items-center gap-2">
           <CardTitle>ドキュメントアップロード</CardTitle>
@@ -160,7 +149,7 @@ export function UploadForm() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors smooth-hover"
                 aria-label="プライバシー情報"
               >
                 <Info className="h-4 w-4" />
