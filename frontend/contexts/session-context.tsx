@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, type ReactNode, useContext, useState } from "react";
+import { useGuestCleanup } from "@/hooks/use-guest-cleanup";
 
 interface SessionContextType {
   sessionId: string | null;
@@ -11,6 +12,9 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // Enable automatic cleanup for guest sessions
+  useGuestCleanup();
 
   return (
     <SessionContext.Provider value={{ sessionId, setSessionId }}>
