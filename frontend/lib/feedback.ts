@@ -29,21 +29,20 @@ export function showSuccess(options: FeedbackOptions) {
   });
 }
 
-export function showError(error: ErrorDetail | FeedbackOptions) {
+export function showError(error: ErrorDetail | FeedbackOptions, onAction?: () => void) {
   const isErrorDetail = "canRetry" in error;
 
   if (isErrorDetail) {
     toast.error(error.title, {
       description: error.description,
       duration: 4000,
-      action: error.action
-        ? {
-            label: error.action,
-            onClick: () => {
-              // Action handled by caller
-            },
-          }
-        : undefined,
+      action:
+        error.action && onAction
+          ? {
+              label: error.action,
+              onClick: onAction,
+            }
+          : undefined,
     });
   } else {
     toast.error(error.title, {

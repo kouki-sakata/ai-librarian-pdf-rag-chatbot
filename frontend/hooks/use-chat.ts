@@ -72,7 +72,7 @@ export function useChat() {
     } catch (error) {
       const errorDetail = getChatError(error, "session");
       setSessionError(errorDetail.description);
-      showError(errorDetail);
+      showError(errorDetail, errorDetail.canRetry ? () => void initSession() : undefined);
     } finally {
       setIsInitializingSession(false);
     }
@@ -212,7 +212,7 @@ export function useChat() {
       };
       setMessages((prev) => [...prev, errorMsg]);
 
-      showError(errorDetail);
+      showError(errorDetail, errorDetail.canRetry ? () => void sendMessage(query) : undefined);
     } finally {
       setIsLoading(false);
     }

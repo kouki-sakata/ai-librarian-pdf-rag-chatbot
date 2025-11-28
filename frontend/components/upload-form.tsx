@@ -118,7 +118,7 @@ export function UploadForm() {
     } catch (error) {
       const errorDetail = getUploadError(error);
       setError(`${errorDetail.title}: ${errorDetail.description}`);
-      showError(errorDetail);
+      showError(errorDetail, handleRetry);
     } finally {
       // Clean up both timers in finally block to ensure cleanup happens always
       clearTimeout(timeoutId);
