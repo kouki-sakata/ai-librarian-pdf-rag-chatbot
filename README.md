@@ -1,6 +1,8 @@
 # AI Librarian - PDF RAG Chatbot
 
 🌐 **Live Demo**:
+https://github.com/user-attachments/assets/982498c9-b8dc-48d6-ad83-5951c0d69c6e
+
 
 🌐 **deployURL: https://ai-librarian-pdf-rag-chatbot.vercel.app**
 
