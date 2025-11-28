@@ -1,24 +1,11 @@
 {
   "entry": [
-    "next.config.ts",
     "app/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
     "hooks/**/*.{ts,tsx}"
   ],
   "project": ["**/*.{ts,tsx}"],
-  "ignore": ["**/*.d.ts"],
-  "ignoreDependencies": [
-    "eslint-config-next",
-    "postcss",
-    "autoprefixer",
-    "tw-animate-css",
-    "@types/node",
-    "@types/react",
-    "@types/react-dom",
-    "typescript",
-    "eslint",
-    "tailwindcss",
-    "@tailwindcss/postcss"
-  ]
+  "ignore": ["**/*.d.ts", "types/api.ts"],
+  "ignoreDependencies": ["postcss", "tw-animate-css", "tailwindcss", "@vitest/coverage-v8"]
 }
