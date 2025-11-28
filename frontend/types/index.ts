@@ -27,6 +27,7 @@ export interface Message {
     page?: number;
     similarity?: number;
     doc_id?: string;
+    snippet?: string;
   }>;
   isEmptyResult?: boolean;
   canRetry?: boolean;

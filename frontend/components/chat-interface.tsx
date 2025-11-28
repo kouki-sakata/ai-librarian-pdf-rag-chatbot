@@ -116,9 +116,12 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full relative bg-background" data-testid="chat-interface">
+    <div
+      className="flex flex-col h-full relative bg-background animate-fade-in"
+      data-testid="chat-interface"
+    >
       {/* Header - Mobile only */}
-      <div className="lg:hidden p-4 border-b flex items-center justify-center font-semibold">
+      <div className="lg:hidden p-4 border-b flex items-center justify-center font-semibold glass sticky top-0 z-10">
         AI司書チャット
       </div>
 
@@ -201,7 +204,7 @@ export function ChatInterface() {
               size="icon"
               onClick={handleSubmit}
               disabled={isLoading || !input.trim() || !sessionId}
-              className="h-12 w-12 rounded-xl flex-shrink-0"
+              className="h-12 w-12 rounded-xl flex-shrink-0 smooth-hover ripple-effect shadow-md"
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

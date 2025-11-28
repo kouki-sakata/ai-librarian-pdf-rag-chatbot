@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Message } from "@/types";
+import { CitationPreview } from "./citation-preview";
 import { Button } from "./ui/button";
 
 interface ChatMessageProps {
@@ -112,61 +113,19 @@ export const ChatMessage = memo(function ChatMessage({
                 </ReactMarkdown>
               )}
               {citations && citations.length > 0 && (
-                <div className="mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground space-y-1.5">
-                  <div className="font-semibold text-foreground/80">出典</div>
-                  <ul className="space-y-1">
-                    {citations.map((c, idx) => (
-                      <li key={`${c.source}-${idx}`} className="flex items-center gap-1">
-                        {c.doc_id ? (
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                const apiUrl =
-                                  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                                const url = `${apiUrl}/api/v1/documents/${
-                                  c.doc_id
-                                }/url${c.page ? `?page=${c.page}` : ""}`;
-                                const response = await fetch(url);
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  window.open(data.url, "_blank");
-                                }
-                              } catch (error) {
-                                console.error("Failed to open document", error);
-                              }
-                            }}
-                            className="text-primary hover:underline flex items-center gap-1"
-                          >
-                            {c.source}
-                            {c.page ? ` p.${c.page}` : ""}
-                            <svg
-                              className="h-3 w-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <title>Open document</title>
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                              />
-                            </svg>
-                          </button>
-                        ) : (
-                          <span>
-                            {c.source}
-                            {c.page ? ` p.${c.page}` : ""}
-                          </span>
-                        )}
-                        {typeof c.similarity === "number"
-                          ? ` (score: ${c.similarity.toFixed(2)})`
-                          : ""}
-                      </li>
+                <div className="mt-4 pt-3 border-t border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">引用元:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {citations.map((citation, index) => (
+                      <CitationPreview
+                        key={`${citation.source}-${index}`}
+                        source={citation.source}
+                        page={citation.page}
+                        similarity={citation.similarity}
+                        snippet={citation.snippet}
+                      />
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>

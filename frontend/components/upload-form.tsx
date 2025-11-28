@@ -102,7 +102,7 @@ export function UploadForm() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        const errorMessage = errorData.detail || getUploadErrorMessage(res);
+        const errorMessage = errorData.detail || getUploadError(res).description;
         throw new Error(errorMessage);
       }
 
@@ -141,7 +141,7 @@ export function UploadForm() {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full depth-2">
       <CardHeader>
         <div className="flex items-center gap-2">
           <CardTitle>ドキュメントアップロード</CardTitle>
@@ -149,7 +149,7 @@ export function UploadForm() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors smooth-hover"
                 aria-label="プライバシー情報"
               >
                 <Info className="h-4 w-4" />
