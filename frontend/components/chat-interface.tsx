@@ -28,6 +28,44 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K or Ctrl+K to focus input
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        textareaRef.current?.focus();
+      }
+
+      // Cmd+/ or Ctrl+/ to show shortcuts help
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        toast.info("キーボードショートカット", {
+          description: (
+            <div className="text-xs space-y-1 mt-1">
+              <div className="flex justify-between gap-4">
+                <span>入力欄フォーカス</span>
+                <kbd className="bg-muted px-1 rounded">Cmd+K</kbd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>送信</span>
+                <kbd className="bg-muted px-1 rounded">Enter</kbd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span>改行</span>
+                <kbd className="bg-muted px-1 rounded">Shift+Enter</kbd>
+              </div>
+            </div>
+          ),
+          duration: 4000,
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     // Only scroll if there are messages
@@ -137,7 +175,7 @@ export function ChatInterface() {
               </div>
             ) : (
               <div className="flex flex-col w-full max-w-3xl mx-auto px-4 py-6">
-                {messages.map((msg) =>
+                {messages.map((msg, index) =>
                   msg.role === "error" ? (
                     <div key={msg.id} className="mb-6">
                       <Alert variant="destructive">
@@ -166,6 +204,9 @@ export function ChatInterface() {
                       content={msg.content}
                       citations={msg.citations}
                       isEmptyResult={msg.isEmptyResult}
+                      isStreaming={
+                        isLoading && msg.role === "assistant" && index === messages.length - 1
+                      }
                     />
                   )
                 )}

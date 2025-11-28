@@ -13,6 +13,7 @@ interface ChatMessageProps {
   content: string;
   citations?: Message["citations"];
   isEmptyResult?: boolean;
+  isStreaming?: boolean;
 }
 
 export const ChatMessage = memo(function ChatMessage({
@@ -20,6 +21,7 @@ export const ChatMessage = memo(function ChatMessage({
   content,
   citations,
   isEmptyResult,
+  isStreaming,
 }: ChatMessageProps) {
   const markdownComponents = useMemo<Components>(
     () => ({
@@ -108,9 +110,18 @@ export const ChatMessage = memo(function ChatMessage({
                   </div>
                 </div>
               ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml components={markdownComponents}>
-                  {content}
-                </ReactMarkdown>
+                <div className="relative">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    skipHtml
+                    components={markdownComponents}
+                  >
+                    {content}
+                  </ReactMarkdown>
+                  {isStreaming && (
+                    <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse align-middle" />
+                  )}
+                </div>
               )}
               {citations && citations.length > 0 && (
                 <div className="mt-4 pt-3 border-t border-border/50">
