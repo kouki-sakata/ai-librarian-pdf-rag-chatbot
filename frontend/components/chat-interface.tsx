@@ -2,6 +2,7 @@
 
 import { AlertCircle, Loader2, RefreshCw, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,6 +28,7 @@ export function ChatInterface() {
 
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -223,6 +225,7 @@ export function ChatInterface() {
         <div className="max-w-3xl mx-auto">
           <div className="relative flex items-end w-full gap-2">
             <Textarea
+              ref={textareaRef}
               placeholder="メッセージを入力... (Shift+Enterで改行)"
               value={input}
               onChange={(e) => setInput(e.target.value)}

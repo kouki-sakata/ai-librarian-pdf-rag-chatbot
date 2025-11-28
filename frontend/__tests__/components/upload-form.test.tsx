@@ -134,6 +134,8 @@ describe("UploadForm", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
+      // The error message might be formatted differently now
+      // We check if the error description is displayed
       expect(screen.getByText(/Server error/)).toBeInTheDocument();
     });
   });

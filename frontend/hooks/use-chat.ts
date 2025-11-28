@@ -108,7 +108,8 @@ export function useChat() {
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        throw new Error(getChatErrorMessage(res, "message"));
+        const errorDetail = getChatError(res, "message");
+        throw new Error(`${errorDetail.title}: ${errorDetail.description}`);
       }
       if (!res.body) throw new Error("No response body");
 
