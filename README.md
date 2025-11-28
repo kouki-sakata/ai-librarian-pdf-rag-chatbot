@@ -1,6 +1,8 @@
 # AI Librarian - PDF RAG Chatbot
 
-🌐 **Live Demo**: [Coming Soon - Will be deployed on Vercel + Render]
+🌐 **Live Demo**: 
+🌐 **deployURL: https://ai-librarian-pdf-rag-chatbot.vercel.app**
+
 
 **AI Librarian** は、アップロードされた PDF ドキュメントの内容に基づいて回答する、RAG (Retrieval-Augmented Generation) ベースのチャットボットアプリケーションです。
 
