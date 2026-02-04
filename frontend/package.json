@@ -52,7 +52,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "@vitest/coverage-v8": "^4.0.13",
     "eslint": "^9",
-    "eslint-config-next": "16.0.3",
+    "eslint-config-next": "16.0.4",
     "jsdom": "^27.2.0",
     "knip": "^5.70.1",
     "openapi-typescript": "^7.10.1",
